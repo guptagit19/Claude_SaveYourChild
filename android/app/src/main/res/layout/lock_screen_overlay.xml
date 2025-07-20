@@ -1,0 +1,37 @@
+<!-- android/app/src/main/res/layout/lock_screen_overlay.xml -->
+<!-- <?xml version="1.0" encoding="utf-8"?> -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E6000000"
+    android:gravity="center"
+    android:orientation="vertical">
+    
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@mipmap/ic_launcher"
+        android:layout_marginBottom="32dp" />
+    
+    <TextView
+        android:id="@+id/lockMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="This app is currently locked"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="32dp"
+        android:paddingHorizontal="32dp" />
+    
+    <Button
+        android:id="@+id/closeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Go Back"
+        android:backgroundTint="#4A90E2"
+        android:textColor="#FFFFFF"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="12dp" />
+    
+</LinearLayout>

@@ -7,7 +7,7 @@ import AppSelectionScreen from '../screens/AppSelectionScreen';
 import TimePickerScreen from '../screens/TimePickerScreen';
 import ActiveSessionScreen from '../screens/ActiveSessionScreen';
 import LockScreen from '../screens/LockScreen';
-
+import PermissionSetupScreen from '../screens/PermissionSetupScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -19,6 +19,13 @@ const AppNavigator = () => {
           component={AppSelectionScreen}
           options={{ title: 'Select Apps to Control' }}
         />
+
+        <Stack.Screen 
+          name="PermissionSetup" 
+          component={PermissionSetupScreen}
+          options={{ title: 'Setup Permissions' }}
+        />
+
         <Stack.Screen 
           name="TimePicker" 
           component={TimePickerScreen}

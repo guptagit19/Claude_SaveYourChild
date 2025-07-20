@@ -1,3 +1,4 @@
+// android/app/src/main/java/com/saveyourchild/MainApplication.kt
 package com.saveyourchild
 
 import android.app.Application
@@ -16,8 +17,8 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
-              // Packages that cannot be autolinked yet can be added manually here, for example:
-              // add(MyReactNativePackage())
+              // Add your native module here
+              add(AppMonitorPackage()) // ✅ Ye line add kar diye hain!
             }
 
         override fun getJSMainModuleName(): String = "index"

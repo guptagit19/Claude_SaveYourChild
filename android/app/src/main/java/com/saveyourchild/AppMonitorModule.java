@@ -6,14 +6,23 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
 import android.provider.Settings;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.util.Base64;
+import android.util.Log;
+
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.ArrayList;
 
 public class AppMonitorModule extends ReactContextBaseJavaModule {
     
     private ReactApplicationContext reactContext;
+    private static final String TAG = "AppMonitorModule";
     
     public AppMonitorModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -25,83 +34,186 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
         return "AppMonitorModule";
     }
     
+    // ✅ Updated method with icon support
     @ReactMethod
     public void getInstalledApps(Promise promise) {
         try {
+            Log.d(TAG, "🔍 Getting installed apps with icons...");
             PackageManager pm = reactContext.getPackageManager();
             List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
             
             WritableArray appList = Arguments.createArray();
+            String selfPackage = reactContext.getPackageName();
+            int count = 0;
             
             for (ApplicationInfo app : apps) {
-                // Filter out system apps
-                if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
-                    WritableMap appInfo = Arguments.createMap();
-                    appInfo.putString("packageName", app.packageName);
-                    appInfo.putString("appName", pm.getApplicationLabel(app).toString());
-                    appList.pushMap(appInfo);
+                try {
+                    // Skip system apps and our own app
+                    if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && 
+                        !app.packageName.equals(selfPackage)) {
+                        
+                        WritableMap appInfo = Arguments.createMap();
+                        
+                        // Basic app info
+                        String appName = pm.getApplicationLabel(app).toString();
+                        appInfo.putString("packageName", app.packageName);
+                        appInfo.putString("appName", appName);
+                        
+                        // ✅ Get and convert icon to base64
+                        try {
+                            Drawable icon = pm.getApplicationIcon(app);
+                            String iconBase64 = drawableToBase64(icon);
+                            appInfo.putString("icon", iconBase64);
+                            Log.d(TAG, "✅ Icon added for: " + appName);
+                        } catch (Exception iconError) {
+                            Log.e(TAG, "❌ Icon error for " + appName + ": " + iconError.getMessage());
+                            appInfo.putString("icon", ""); // Empty if icon fails
+                        }
+                        
+                        appList.pushMap(appInfo);
+                        count++;
+                        
+                        // Limit to 50 apps to avoid performance issues
+                        if (count >= 70) break;
+                    }
+                } catch (Exception appError) {
+                    Log.e(TAG, "Error processing app: " + appError.getMessage());
+                    continue;
                 }
             }
             
+            Log.d(TAG, "✅ Successfully loaded " + count + " apps with icons");
             promise.resolve(appList);
+            
         } catch (Exception e) {
+            Log.e(TAG, "❌ Error getting installed apps: " + e.getMessage());
             promise.reject("GET_APPS_ERROR", e.getMessage());
+        }
+    }
+    
+    // ✅ Helper method to convert drawable to base64
+    private String drawableToBase64(Drawable drawable) {
+        try {
+            // Set reasonable icon size (48x48 dp)
+            int iconSize = 144; // 48dp * 3 for good quality
+            
+            Bitmap bitmap = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            
+            // Set bounds and draw
+            drawable.setBounds(0, 0, iconSize, iconSize);
+            drawable.draw(canvas);
+            
+            // Convert to base64
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 90, byteStream); // 90% quality for smaller size
+            byte[] byteArray = byteStream.toByteArray();
+            
+            // Cleanup
+            byteStream.close();
+            bitmap.recycle();
+            
+            return "data:image/png;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error converting icon to base64: " + e.getMessage());
+            return "";
         }
     }
     
     @ReactMethod
     public void startAppMonitoring() {
-        Intent intent = new Intent(reactContext, AppMonitorService.class);
-        reactContext.startService(intent);
+        try {
+            Intent intent = new Intent(reactContext, AppMonitorService.class);
+            reactContext.startService(intent);
+            Log.d(TAG, "✅ App monitoring service started");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error starting app monitoring: " + e.getMessage());
+        }
     }
     
     @ReactMethod
     public void stopAppMonitoring() {
-        Intent intent = new Intent(reactContext, AppMonitorService.class);
-        reactContext.stopService(intent);
+        try {
+            Intent intent = new Intent(reactContext, AppMonitorService.class);
+            reactContext.stopService(intent);
+            Log.d(TAG, "✅ App monitoring service stopped");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error stopping app monitoring: " + e.getMessage());
+        }
     }
     
     @ReactMethod
     public void checkAccessibilityPermission(Promise promise) {
-        boolean isEnabled = isAccessibilityServiceEnabled();
-        promise.resolve(isEnabled);
+        try {
+            boolean isEnabled = isAccessibilityServiceEnabled();
+            Log.d(TAG, "Accessibility permission: " + isEnabled);
+            promise.resolve(isEnabled);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking accessibility permission: " + e.getMessage());
+            promise.resolve(false);
+        }
     }
     
     @ReactMethod
     public void openAccessibilitySettings() {
-        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        reactContext.startActivity(intent);
+        try {
+            Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            reactContext.startActivity(intent);
+            Log.d(TAG, "✅ Opened accessibility settings");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error opening accessibility settings: " + e.getMessage());
+        }
     }
     
     @ReactMethod
     public void checkOverlayPermission(Promise promise) {
-        boolean canDrawOverlays = Settings.canDrawOverlays(reactContext);
-        promise.resolve(canDrawOverlays);
+        try {
+            boolean canDrawOverlays = Settings.canDrawOverlays(reactContext);
+            Log.d(TAG, "Overlay permission: " + canDrawOverlays);
+            promise.resolve(canDrawOverlays);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking overlay permission: " + e.getMessage());
+            promise.resolve(false);
+        }
     }
     
     @ReactMethod
     public void openOverlaySettings() {
-        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        reactContext.startActivity(intent);
+        try {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            reactContext.startActivity(intent);
+            Log.d(TAG, "✅ Opened overlay settings");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error opening overlay settings: " + e.getMessage());
+        }
     }
     
     private boolean isAccessibilityServiceEnabled() {
-        // Check if accessibility service is enabled
-        String serviceName = reactContext.getPackageName() + "/" + AppMonitorService.class.getName();
-        String enabledServices = Settings.Secure.getString(
-            reactContext.getContentResolver(),
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        );
-        
-        return enabledServices != null && enabledServices.contains(serviceName);
+        try {
+            String serviceName = reactContext.getPackageName() + "/" + AppMonitorService.class.getName();
+            String enabledServices = Settings.Secure.getString(
+                reactContext.getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            );
+            
+            return enabledServices != null && enabledServices.contains(serviceName);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking accessibility service: " + e.getMessage());
+            return false;
+        }
     }
     
     // Send events to React Native
     public void sendEvent(String eventName, WritableMap params) {
-        reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-            .emit(eventName, params);
+        try {
+            reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, params);
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending event: " + e.getMessage());
+        }
     }
 }

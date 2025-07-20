@@ -22,7 +22,7 @@ const AppSelectionScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState({
     accessibility: false,
-    overlay: false
+    overlay: false,
   });
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
@@ -34,13 +34,12 @@ const AppSelectionScreen = ({ navigation }) => {
     try {
       // Check permissions first
       await checkPermissions();
-      
+
       // Load previously selected apps
       await loadPreviouslySelectedApps();
-      
+
       // Get installed apps (fallback to mock if native fails)
       await loadInstalledApps();
-      
     } catch (error) {
       console.error('Error initializing screen:', error);
     } finally {
@@ -52,7 +51,7 @@ const AppSelectionScreen = ({ navigation }) => {
     try {
       const perms = await AppMonitorService.checkPermissions();
       setPermissions(perms);
-      
+
       // Show permission modal if not granted
       if (!perms.accessibility || !perms.overlay) {
         setShowPermissionModal(true);
@@ -65,24 +64,26 @@ const AppSelectionScreen = ({ navigation }) => {
   const loadInstalledApps = async () => {
     try {
       const apps = await AppMonitorService.getInstalledApps();
-      
+
       if (apps && apps.length > 0) {
         // Filter popular social media apps
-        const socialApps = apps.filter(app => 
-          app.packageName.includes('instagram') ||
-          app.packageName.includes('facebook') ||
-          app.packageName.includes('whatsapp') ||
-          app.packageName.includes('youtube') ||
-          app.packageName.includes('tiktok') ||
-          app.packageName.includes('snapchat') ||
-          app.packageName.includes('twitter') ||
-          app.packageName.includes('telegram') ||
-          app.packageName.includes('musically')
-        );
-        
-        setInstalledApps(socialApps.length > 0 ? socialApps : apps.slice(0, 20));
+        //Alert.alert('Apps found.')
+        // const socialApps = apps.filter(app =>
+        //   app.packageName.includes('instagram') ||
+        //   app.packageName.includes('facebook') ||
+        //   app.packageName.includes('whatsapp') ||
+        //   app.packageName.includes('youtube') ||
+        //   app.packageName.includes('tiktok') ||
+        //   app.packageName.includes('snapchat') ||
+        //   app.packageName.includes('twitter') ||
+        //   app.packageName.includes('telegram') ||
+        //   app.packageName.includes('musically')
+        // );
+        //setInstalledApps(socialApps.length > 0 ? socialApps : apps.slice(0, 20));
+        setInstalledApps(apps);
       } else {
         // Fallback to mock data
+        //Alert.alert('No apps found.')
         setInstalledApps(MOCK_APPS);
       }
     } catch (error) {
@@ -103,7 +104,7 @@ const AppSelectionScreen = ({ navigation }) => {
     }
   };
 
-  const toggleAppSelection = (packageName) => {
+  const toggleAppSelection = packageName => {
     setSelectedApps(prev => {
       if (prev.includes(packageName)) {
         return prev.filter(name => name !== packageName);
@@ -113,7 +114,7 @@ const AppSelectionScreen = ({ navigation }) => {
           Alert.alert(
             'Limit Reached',
             'You can select maximum 5 apps in the MVP version.',
-            [{ text: 'OK' }]
+            [{ text: 'OK' }],
           );
           return prev;
         }
@@ -127,22 +128,25 @@ const AppSelectionScreen = ({ navigation }) => {
       Alert.alert(
         'No Apps Selected',
         'Please select at least one app to continue.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
       return;
     }
 
     // Check permissions again before continuing
     const currentPerms = await AppMonitorService.checkPermissions();
-    
+
     if (!currentPerms.accessibility || !currentPerms.overlay) {
       Alert.alert(
         'Permissions Required',
         'Please grant all required permissions to use app blocking features.',
         [
           { text: 'Cancel' },
-          { text: 'Setup Permissions', onPress: () => setShowPermissionModal(true) }
-        ]
+          {
+            text: 'Setup Permissions',
+            onPress: () => setShowPermissionModal(true),
+          },
+        ],
       );
       return;
     }
@@ -191,23 +195,23 @@ const AppSelectionScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.BACKGROUND} />
-      
+
       <View style={styles.header}>
         <Text style={styles.title}>Choose Apps to Control</Text>
         <Text style={styles.subtitle}>
           Select apps that distract you the most
         </Text>
-        <Text style={styles.limit}>
-          ({selectedApps.length}/5 selected)
-        </Text>
-        
+        <Text style={styles.limit}>(Total Apps - {installedApps.length})</Text>
+        <Text style={styles.limit}>({selectedApps.length}/5 selected)</Text>
+
         {/* Permission Status */}
         {(!permissions.accessibility || !permissions.overlay) && (
           <View style={styles.permissionWarning}>
             <Text style={styles.warningText}>
-              ⚠️ Some permissions are missing. App blocking may not work properly.
+              ⚠️ Some permissions are missing. App blocking may not work
+              properly.
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.warningButton}
               onPress={() => setShowPermissionModal(true)}
             >
@@ -230,15 +234,17 @@ const AppSelectionScreen = ({ navigation }) => {
         <TouchableOpacity
           style={[
             styles.continueButton,
-            selectedApps.length === 0 && styles.disabledButton
+            selectedApps.length === 0 && styles.disabledButton,
           ]}
           onPress={handleContinue}
           disabled={selectedApps.length === 0}
         >
-          <Text style={[
-            styles.continueButtonText,
-            selectedApps.length === 0 && styles.disabledButtonText
-          ]}>
+          <Text
+            style={[
+              styles.continueButtonText,
+              selectedApps.length === 0 && styles.disabledButtonText,
+            ]}
+          >
             Continue ({selectedApps.length} apps)
           </Text>
         </TouchableOpacity>
@@ -257,32 +263,35 @@ const AppSelectionScreen = ({ navigation }) => {
             <Text style={styles.modalText}>
               To block other apps, we need special permissions:
             </Text>
-            
+
             <View style={styles.permissionList}>
               <View style={styles.permissionItem}>
                 <Text style={styles.permissionName}>
-                  {permissions.accessibility ? '✅' : '❌'} Accessibility Service
+                  {permissions.accessibility ? '✅' : '❌'} Accessibility
+                  Service
                 </Text>
                 <Text style={styles.permissionDesc}>Monitor app launches</Text>
               </View>
-              
+
               <View style={styles.permissionItem}>
                 <Text style={styles.permissionName}>
                   {permissions.overlay ? '✅' : '❌'} Display Over Apps
                 </Text>
-                <Text style={styles.permissionDesc}>Show lock screen overlay</Text>
+                <Text style={styles.permissionDesc}>
+                  Show lock screen overlay
+                </Text>
               </View>
             </View>
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalSkipButton}
                 onPress={() => setShowPermissionModal(false)}
               >
                 <Text style={styles.modalSkipText}>Skip for Now</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.modalSetupButton}
                 onPress={handlePermissionSetup}
               >
@@ -296,12 +305,12 @@ const AppSelectionScreen = ({ navigation }) => {
   );
 };
 
-// Mock data fallback
+// Update MOCK_APPS in AppSelectionScreen.js with better fallback
 const MOCK_APPS = [
   {
     appName: 'Instagram',
     packageName: 'com.instagram.android',
-    icon: null,
+    icon: null, // Will show first letter fallback
   },
   {
     appName: 'YouTube',
@@ -434,7 +443,7 @@ const styles = StyleSheet.create({
   disabledButtonText: {
     color: '#888',
   },
-  
+
   // Modal styles
   modalOverlay: {
     flex: 1,

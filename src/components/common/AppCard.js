@@ -1,9 +1,9 @@
 // src/components/common/AppCard.js
 import React from 'react';
 import {
+  TouchableOpacity,
   View,
   Text,
-  TouchableOpacity,
   Image,
   StyleSheet,
 } from 'react-native';
@@ -16,6 +16,28 @@ const AppCard = ({
   isSelected, 
   onPress 
 }) => {
+  
+  const renderIcon = () => {
+    if (icon && icon.startsWith('data:image')) {
+      // Base64 icon from native module
+      return (
+        <Image 
+          source={{ uri: icon }} 
+          style={styles.appIcon}
+          resizeMode="cover"
+        />
+      );
+    }
+    
+    // Fallback to text icon
+    const firstLetter = appName ? appName.charAt(0).toUpperCase() : '?';
+    return (
+      <View style={[styles.appIcon, styles.textIconContainer]}>
+        <Text style={styles.textIcon}>{firstLetter}</Text>
+      </View>
+    );
+  };
+
   return (
     <TouchableOpacity 
       style={[
@@ -25,34 +47,39 @@ const AppCard = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.iconContainer}>
-        {icon ? (
-          <Image source={{ uri: icon }} style={styles.appIcon} />
-        ) : (
-          <View style={styles.defaultIcon}>
-            <Text style={styles.defaultIconText}>
-              {appName ? appName.charAt(0).toUpperCase() : '?'}
-            </Text>
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.textContainer}>
-        <Text style={styles.appName} numberOfLines={1}>
-          {appName || 'Unknown App'}
-        </Text>
-        <Text style={styles.packageName} numberOfLines={1}>
-          {packageName || 'com.unknown.app'}
-        </Text>
-      </View>
-      
-      <View style={[
-        styles.checkbox,
-        isSelected && styles.checkboxSelected
-      ]}>
-        {isSelected && (
-          <Text style={styles.checkmark}>✓</Text>
-        )}
+      <View style={styles.content}>
+        {/* App Icon */}
+        <View style={styles.iconContainer}>
+          {renderIcon()}
+          {/* {isSelected && (
+            <View style={styles.checkmark}>
+              <Text style={styles.checkmarkText}>✓</Text>
+            </View>
+          )} */}
+        </View>
+
+        {/* App Info */}
+        <View style={styles.appInfo}>
+          <Text style={styles.appName} numberOfLines={1}>
+            {appName}
+          </Text>
+          <Text style={styles.packageName} numberOfLines={1}>
+            {packageName}
+          </Text>
+        </View>
+
+        {/* Selection Indicator */}
+        <View style={[
+          styles.selectionIndicator,
+          isSelected && styles.selectedIndicator
+        ]}>
+          {/* {isSelected && <View style={styles.selectedDot} />} */}
+          {isSelected && (
+            <View style={styles.checkmark}>
+              <Text style={styles.checkmarkText}>✓</Text>
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -60,76 +87,95 @@ const AppCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    marginVertical: 5,
-    marginHorizontal: 10,
     backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginVertical: 6,
     borderRadius: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   selectedContainer: {
-    borderWidth: 2,
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: '#F0F8FF',
+    borderColor: COLORS.SUCCESS,
+    backgroundColor: '#F8FFF8',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
   },
   iconContainer: {
-    marginRight: 15,
+    position: 'relative',
+    marginRight: 16,
   },
   appIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
   },
-  defaultIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    backgroundColor: COLORS.PRIMARY,
+  textIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.PRIMARY,
   },
-  defaultIconText: {
+  textIcon: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
   },
-  textContainer: {
+  checkmark: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: COLORS.SUCCESS,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkmarkText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  appInfo: {
     flex: 1,
+    marginRight: 12,
   },
   appName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: COLORS.TEXT,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   packageName: {
     fontSize: 12,
-    color: '#666',
+    color: '#888',
   },
-  checkbox: {
+  selectionIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#DDD',
-    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxSelected: {
-    backgroundColor: COLORS.PRIMARY,
-    borderColor: COLORS.PRIMARY,
+  selectedIndicator: {
+    borderColor: COLORS.SUCCESS,
+    backgroundColor: COLORS.SUCCESS,
   },
-  checkmark: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  selectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'white',
   },
 });
 

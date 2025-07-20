@@ -18,8 +18,8 @@ const { width } = Dimensions.get('window');
 
 const TimePickerScreen = ({ navigation, route }) => {
   const { selectedApps } = route.params;
-  const [selectedAccessTime, setSelectedAccessTime] = useState(30); // default 30 minutes
-  const [selectedLockTime, setSelectedLockTime] = useState(120); // default 2 hours
+  const [selectedAccessTime, setSelectedAccessTime] = useState(15); // default 15 minutes
+  const [selectedLockTime, setSelectedLockTime] = useState(60); // default 1 hours
 
   const handleStartSession = () => {
     if (!selectedAccessTime || !selectedLockTime) {
@@ -37,7 +37,9 @@ const TimePickerScreen = ({ navigation, route }) => {
 
     // Save to MMKV storage
     StorageService.setActiveSession(sessionData);
+    console.log('ActiveSession - ', StorageService.getActiveSession());
     StorageService.setLockedApps(selectedApps);
+    console.log('LockedApps - ', StorageService.getLockedApps());
 
     navigation.navigate('ActiveSession', {
       sessionData: sessionData,
@@ -46,15 +48,14 @@ const TimePickerScreen = ({ navigation, route }) => {
 
   const TimeOption = ({ option, isSelected, onPress, type }) => (
     <TouchableOpacity
-      style={[
-        styles.timeOption,
-        isSelected && styles.selectedTimeOption,
-      ]}
+      style={[styles.timeOption, isSelected && styles.selectedTimeOption]}
       onPress={() => onPress(option.value)}
       activeOpacity={0.7}
     >
       <LinearGradient
-        colors={isSelected ? [COLORS.PRIMARY, '#6A5ACD'] : ['#f8f9fa', '#ffffff']}
+        colors={
+          isSelected ? [COLORS.PRIMARY, '#6A5ACD'] : ['#f8f9fa', '#ffffff']
+        }
         style={styles.timeOptionGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -64,10 +65,12 @@ const TimePickerScreen = ({ navigation, route }) => {
           size={24}
           color={isSelected ? '#ffffff' : COLORS.PRIMARY}
         />
-        <Text style={[
-          styles.timeOptionText,
-          isSelected && styles.selectedTimeOptionText
-        ]}>
+        <Text
+          style={[
+            styles.timeOptionText,
+            isSelected && styles.selectedTimeOptionText,
+          ]}
+        >
           {option.label}
         </Text>
         {isSelected && (
@@ -83,10 +86,7 @@ const TimePickerScreen = ({ navigation, route }) => {
   );
 
   return (
-    <LinearGradient
-      colors={['#f8f9fa', '#e9ecef']}
-      style={styles.container}
-    >
+    <LinearGradient colors={['#f8f9fa', '#e9ecef']} style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -109,7 +109,9 @@ const TimePickerScreen = ({ navigation, route }) => {
             ))}
             {selectedApps.length > 5 && (
               <View style={styles.appChip}>
-                <Text style={styles.appChipText}>+{selectedApps.length - 5}</Text>
+                <Text style={styles.appChipText}>
+                  +{selectedApps.length - 5}
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -122,7 +124,7 @@ const TimePickerScreen = ({ navigation, route }) => {
             How long can you use these apps?
           </Text>
           <View style={styles.timeOptionsContainer}>
-            {TIME_OPTIONS.ACCESS_TIME.map((option) => (
+            {TIME_OPTIONS.ACCESS_TIME.map(option => (
               <TimeOption
                 key={option.value}
                 option={option}
@@ -141,7 +143,7 @@ const TimePickerScreen = ({ navigation, route }) => {
             How long should these apps be locked after use?
           </Text>
           <View style={styles.timeOptionsContainer}>
-            {TIME_OPTIONS.LOCK_TIME.map((option) => (
+            {TIME_OPTIONS.LOCK_TIME.map(option => (
               <TimeOption
                 key={option.value}
                 option={option}
@@ -165,13 +167,23 @@ const TimePickerScreen = ({ navigation, route }) => {
             <View style={styles.summaryRow}>
               <Icon name="play-circle-filled" size={20} color="#ffffff" />
               <Text style={styles.summaryText}>
-                Access Time: {TIME_OPTIONS.ACCESS_TIME.find(opt => opt.value === selectedAccessTime)?.label}
+                Access Time:{' '}
+                {
+                  TIME_OPTIONS.ACCESS_TIME.find(
+                    opt => opt.value === selectedAccessTime,
+                  )?.label
+                }
               </Text>
             </View>
             <View style={styles.summaryRow}>
               <Icon name="lock" size={20} color="#ffffff" />
               <Text style={styles.summaryText}>
-                Lock Duration: {TIME_OPTIONS.LOCK_TIME.find(opt => opt.value === selectedLockTime)?.label}
+                Lock Duration:{' '}
+                {
+                  TIME_OPTIONS.LOCK_TIME.find(
+                    opt => opt.value === selectedLockTime,
+                  )?.label
+                }
               </Text>
             </View>
             <View style={styles.summaryRow}>

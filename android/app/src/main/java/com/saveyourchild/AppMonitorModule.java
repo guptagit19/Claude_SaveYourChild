@@ -23,10 +23,30 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
     
     private ReactApplicationContext reactContext;
     private static final String TAG = "AppMonitorModule";
-    
+    private static AppMonitorModule moduleInstance;
+
     public AppMonitorModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+        moduleInstance = this; // ✅ Store static reference
+    }
+
+    // ✅ Static method to send event from service
+    public static void sendEventFromService(String appName, String packageName) {
+        try {
+            if (moduleInstance != null) {
+                WritableMap params = Arguments.createMap();
+                params.putString("appName", appName);
+                params.putString("packageName", packageName);
+                params.putString("action", "NAVIGATE_TO_LOCK_SCREEN");
+                params.putString("timestamp", String.valueOf(System.currentTimeMillis()));
+
+                moduleInstance.sendEvent("AppBlocked", params);
+                Log.d("AppMonitorModule", "✅ Event sent from service for: " + appName);
+            }
+        } catch (Exception e) {
+            Log.e("AppMonitorModule", "❌ Error sending event from service: " + e.getMessage());
+        }
     }
     
     @Override
@@ -216,4 +236,58 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
             Log.e(TAG, "Error sending event: " + e.getMessage());
         }
     }
+
+    @ReactMethod
+    public void bringAppToForeground(Promise promise) {
+        try {
+            Context context = reactContext;
+            String packageName = context.getPackageName();
+
+            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                context.startActivity(launchIntent);
+                Log.d(TAG, "✅ Brought app to foreground");
+                promise.resolve(true);
+            } else {
+                promise.reject("FOREGROUND_ERROR", "Could not bring app to foreground");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error bringing app to foreground: " + e.getMessage());
+            promise.reject("FOREGROUND_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void navigateToLockScreen(String appName, String packageName) {
+        try {
+            Log.d(TAG, "🔒 Navigating to lock screen for: " + appName);
+
+            // Send event to React Native to navigate
+            WritableMap params = Arguments.createMap();
+            params.putString("appName", appName);
+            params.putString("packageName", packageName);
+            params.putString("action", "NAVIGATE_TO_LOCK_SCREEN");
+
+            sendEvent("AppBlocked", params);
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error navigating to lock screen: " + e.getMessage());
+        }
+    }
+
+    // android/app/src/main/java/com/saveyourchild/AppMonitorModule.java - Add this method
+    @ReactMethod
+    public void goToHomeScreen() {
+        try {
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            reactContext.startActivity(homeIntent);
+            Log.d(TAG, "✅ Navigated to home screen");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error navigating to home: " + e.getMessage());
+        }
+    }
+
 }

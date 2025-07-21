@@ -1,4 +1,4 @@
-// src/screens/LockScreen.js
+// src/screens/LockScreen.js - Add home navigation
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,6 +9,7 @@ import {
   StatusBar,
   BackHandler,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -16,27 +17,26 @@ import QuoteCard from '../components/common/QuoteCard';
 import { COLORS } from '../utils/constants';
 import { MOTIVATIONAL_QUOTES } from '../utils/motivationalQuotes';
 import StorageService from '../services/StorageService';
+import AppMonitorService from '../services/AppMonitorService';
 
 const { width, height } = Dimensions.get('window');
 
 const LockScreen = ({ route, navigation }) => {
-  const { lockedAppName, remainingTime } = route.params || {};
+  const { lockedAppName, lockedPackage, remainingTime } = route.params || {};
   
   // State management
   const [currentQuote, setCurrentQuote] = useState(MOTIVATIONAL_QUOTES[0]);
-  const [timeLeft, setTimeLeft] = useState(remainingTime || 0);
+  const [timeLeft, setTimeLeft] = useState(remainingTime || 30);
   const [pulseAnimation] = useState(new Animated.Value(1));
   const [fadeAnimation] = useState(new Animated.Value(0));
 
   // Initialize component
   useEffect(() => {
-    // Disable back button
+    console.log('🔒 LockScreen opened for:', lockedAppName);
+    
+    // ✅ Handle back button - go to home instead of blocking
     const backAction = () => {
-      Alert.alert(
-        "Stay Strong! 💪",
-        "You're building discipline. Keep going!",
-        [{ text: "OK" }]
-      );
+      goToHomeScreen();
       return true; // Prevent default behavior
     };
 
@@ -113,6 +113,23 @@ const LockScreen = ({ route, navigation }) => {
     return () => clearInterval(timer);
   };
 
+  // ✅ Go to home screen function
+  const goToHomeScreen = async () => {
+    try {
+      console.log('🏠 Going to home screen from LockScreen');
+      await AppMonitorService.goToHomeScreen();
+      
+      Alert.alert(
+        "Stay Strong! 💪",
+        "Focus time is still active. Use this time productively!",
+        [{ text: "OK" }]
+      );
+      
+    } catch (error) {
+      console.error('Error going to home:', error);
+    }
+  };
+
   // Handle unlock
   const handleUnlock = async () => {
     try {
@@ -174,7 +191,7 @@ const LockScreen = ({ route, navigation }) => {
             </Animated.View>
             
             <Text style={styles.appName}>
-              {lockedAppName} is Locked
+              {lockedAppName || 'App'} is Locked
             </Text>
             
             <Text style={styles.subtitle}>
@@ -209,7 +226,7 @@ const LockScreen = ({ route, navigation }) => {
                 style={[
                   styles.progressFill,
                   { 
-                    width: `${Math.max(0, (1 - timeLeft / (remainingTime || 1)) * 100)}%` 
+                    width: `${Math.max(0, (1 - timeLeft / (remainingTime || 30)) * 100)}%` 
                   }
                 ]} 
               />
@@ -218,6 +235,12 @@ const LockScreen = ({ route, navigation }) => {
               Building your focus strength... 💪
             </Text>
           </View>
+
+          {/* ✅ Home Button */}
+          <TouchableOpacity style={styles.homeButton} onPress={goToHomeScreen}>
+            <Icon name="home" size={24} color="#ffffff" />
+            <Text style={styles.homeButtonText}>Go Home</Text>
+          </TouchableOpacity>
 
           {/* Bottom Section */}
           <View style={styles.footer}>
@@ -249,7 +272,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 40,
   },
   lockIconContainer: {
     width: 120,
@@ -287,7 +310,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     marginVertical: 20,
-    backdropFilter: 'blur(10px)',
   },
   timeLabel: {
     fontSize: 16,
@@ -339,6 +361,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
     opacity: 0.8,
+  },
+  // ✅ Home button styles
+  homeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+    marginVertical: 20,
+  },
+  homeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   footer: {
     alignItems: 'center',

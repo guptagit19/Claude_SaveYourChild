@@ -1,3 +1,4 @@
+<!-- android/app/src/main/res/values/styles.xml -->
 <resources>
 
     <!-- Base application theme. -->
@@ -6,4 +7,13 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 
+    <!-- ✅ Add Overlay Theme -->
+    <style name="OverlayTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowBackground">#667eea</item>
+<!--        <item name="android.R.attr.windowIsFloating">false</item>-->
+    </style>
 </resources>
+

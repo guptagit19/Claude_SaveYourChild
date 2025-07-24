@@ -9,7 +9,8 @@
     "start": "react-native start",
     "test": "jest",
     "clean": "cd android && ./gradlew clean && cd ..",
-    "build-android": "cd android && ./gradlew assembleRelease"
+    "build-android": "cd android && ./gradlew assembleRelease",
+    "cra": "cd android && ./gradlew clean && cd .. && yarn android"
   },
   "dependencies": {
     "@react-native/new-app-screen": "0.80.1",

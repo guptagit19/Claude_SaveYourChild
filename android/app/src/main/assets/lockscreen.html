@@ -1,0 +1,898 @@
+<!-- android/app/src/main/assets/lockscreen.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Lock Screen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            animation: gradientShift 8s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
+            50% { background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%); }
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            color: white;
+            position: relative;
+        }
+
+        /* Animated Background Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-top: 40px;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Hexagonal Lock Icon Container */
+        .hexagon-container {
+            position: relative;
+            margin: 0 auto 30px;
+            width: 140px;
+            height: 140px;
+        }
+
+        .hexagon {
+            width: 140px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+            margin: 10px 0;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: hexagonPulse 3s ease-in-out infinite;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .hexagon:before,
+        .hexagon:after {
+            content: "";
+            position: absolute;
+            width: 0;
+            border-left: 70px solid transparent;
+            border-right: 70px solid transparent;
+            left: 0;
+        }
+
+        .hexagon:before {
+            bottom: 100%;
+            border-bottom: 35px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hexagon:after {
+            top: 100%;
+            border-top: 35px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes hexagonPulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        .lock-icon {
+            font-size: 60px;
+            color: white;
+            animation: lockBreathe 2s ease-in-out infinite;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+        }
+
+        @keyframes lockBreathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .app-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stats Container */
+        .stats-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.8s ease-out 0.4s both;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .time-display {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .time-label {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .time-value {
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: timeGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes timeGlow {
+            0%, 100% { color: #ffffff; }
+            50% { color: #4ade80; text-shadow: 0 0 20px rgba(74, 222, 128, 0.5); }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border-radius: 4px;
+            width: 0%;
+            animation: progressPulse 3s ease-in-out infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
+        }
+
+        /* Circular Timer Styles */
+        .circular-timer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .circle-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+        }
+
+        .progress-ring-bar {
+            stroke-dasharray: 439.6;
+            stroke-dashoffset: 439.6;
+            transition: stroke-dashoffset 0.35s;
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.3)); }
+            50% { filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.6)); }
+        }
+
+        .timer-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .timer-content .time-value {
+            font-size: 28px;
+            font-weight: bold;
+            animation: timeGlow 2s ease-in-out infinite;
+        }
+
+        .timer-content .time-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* Motivational Section */
+        .motivation-card {
+            background: rgba(74, 222, 128, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            text-align: center;
+            animation: slideInUp 0.8s ease-out 0.6s both;
+        }
+
+        .trophy-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .motivation-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4ade80;
+            margin-bottom: 15px;
+        }
+
+        .motivation-text {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        /* Lock Preview Section */
+        .lock-preview-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: slideInUp 0.8s ease-out 0.8s both;
+        }
+
+        .lock-preview-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .lock-preview-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .lock-time {
+            font-weight: bold;
+            color: #f59e0b;
+        }
+
+        .lock-preview-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ade80;
+            display: block;
+            animation: statBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes statBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Quote Card */
+        .quote-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: slideInUp 0.8s ease-out 0.8s both;
+        }
+
+        .quote-text {
+            font-size: 16px;
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            opacity: 0.95;
+        }
+
+        .quote-author {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        /* Action Buttons */
+        .action-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            animation: slideInUp 0.8s ease-out 1s both;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-home {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .hexagon-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            .hexagon {
+                width: 120px;
+                height: 100px;
+            }
+
+            .lock-icon {
+                font-size: 50px;
+            }
+
+            .app-title {
+                font-size: 24px;
+            }
+
+            .time-value {
+                font-size: 36px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stat-divider {
+                display: none;
+            }
+
+            .action-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-container {
+                padding: 20px;
+            }
+
+            .quote-card {
+                padding: 20px;
+            }
+
+            .time-value {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Animated Background Particles -->
+<div class="particles" id="particles"></div>
+
+<div class="container">
+    <!-- Header Section -->
+    <div class="header">
+        <div class="hexagon-container">
+            <div class="hexagon">
+                <div class="lock-icon">🔒</div>
+            </div>
+        </div>
+        <h1 class="app-title">Instagram is Locked</h1>
+        <p class="subtitle">Stay focused on your goals! 🎯</p>
+    </div>
+
+    <!-- Stats Container -->
+    <div class="stats-container">
+        <!-- Circular Timer Display -->
+        <div class="circular-timer">
+            <div class="circle-container">
+                <svg class="progress-ring" width="160" height="160">
+                    <circle class="progress-ring-circle" cx="80" cy="80" r="70" stroke="rgba(255,255,255,0.3)" stroke-width="6" fill="transparent"/>
+                    <circle class="progress-ring-bar" cx="80" cy="80" r="70" stroke="#4ade80" stroke-width="6" fill="transparent" stroke-linecap="round" transform="rotate(-90 80 80)" id="progressCircle"/>
+                </svg>
+                <div class="timer-content">
+                    <div class="time-value" id="timeValue">30:00</div>
+                    <div class="time-label">remaining</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-value" id="totalTimeDisplay">30min</span>
+                <div class="stat-label">Total Time</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-value" id="usedTime">0min</span>
+                <div class="stat-label">Used Time</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motivational Section -->
+    <div class="motivation-card">
+        <div class="trophy-icon">🏆</div>
+        <h3 class="motivation-title">You're Doing Amazing! 🌟</h3>
+        <p class="motivation-text">
+            Every minute of focused time brings you closer to your goals.
+            Stay strong and keep going!
+        </p>
+    </div>
+
+    <!-- Lock Preview -->
+    <div class="lock-preview-card">
+        <h3 class="lock-preview-title">⏰ Focus Session Active</h3>
+        <p class="lock-preview-text">
+            Apps are locked for <span class="lock-time" id="lockTimeDisplay">30 minutes</span>
+        </p>
+        <p class="lock-preview-subtext">
+            Use this time to focus on your studies, work, or spend time with family!
+        </p>
+    </div>
+
+    <!-- Motivational Quote -->
+    <div class="quote-card">
+        <div class="quote-text" id="quoteText">
+            "The successful warrior is the average person with laser-like focus."
+        </div>
+        <div class="quote-author" id="quoteAuthor">— Bruce Lee</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-container">
+        <button class="btn btn-home" onclick="goHome()">
+            🏠 Go Home
+        </button>
+        <button class="btn btn-primary" onclick="unlockApps()">
+            ⏰ Session Running
+        </button>
+    </div>
+</div>
+
+<script>
+    // Motivational quotes data
+    const quotes = [
+        {
+            text: "The successful warrior is the average person with laser-like focus.",
+            author: "Bruce Lee"
+        },
+        {
+            text: "Focus is a matter of deciding what things you're not going to do.",
+            author: "John Carmack"
+        },
+        {
+            text: "Concentrate all your thoughts upon the work at hand.",
+            author: "Alexander Graham Bell"
+        },
+        {
+            text: "It is during our darkest moments that we must focus to see the light.",
+            author: "Aristotle"
+        },
+        {
+            text: "The successful person has the habit of doing the things failures don't like to do.",
+            author: "Thomas Edison"
+        },
+        {
+            text: "Success is built on small daily disciplines.",
+            author: "Unknown"
+        },
+        {
+            text: "You are stronger than your excuses.",
+            author: "Unknown"
+        },
+        {
+            text: "Focus on progress, not perfection.",
+            author: "Unknown"
+        }
+    ];
+
+    // Timer variables
+    let timeRemaining = 30 * 60; // 30 minutes in seconds
+    let totalTime = 30 * 60;
+    let currentQuoteIndex = 0;
+    let timerInterval;
+
+    // Initialize particles
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.width = Math.random() * 6 + 4 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Update timer display
+    function updateTimer() {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        const timeValue = document.getElementById('timeValue');
+        const progressBar = document.getElementById('progressBar');
+        const progressCircle = document.getElementById('progressCircle');
+        const usedTime = document.getElementById('usedTime');
+
+        // Update time display
+        timeValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        // Update progress bar
+        const progress = (totalTime - timeRemaining) / totalTime * 100;
+        progressBar.style.width = progress + '%';
+
+        // Update circular progress
+        const circumference = 2 * Math.PI * 70; // radius = 70
+        const offset = circumference - (progress / 100) * circumference;
+        progressCircle.style.strokeDashoffset = offset;
+
+        // Update used time
+        const usedMinutes = Math.floor((totalTime - timeRemaining) / 60);
+        usedTime.textContent = usedMinutes + 'min';
+
+        // Change color based on remaining time
+        const progressPercent = timeRemaining / totalTime;
+        if (progressPercent > 0.5) {
+            timeValue.style.color = '#4ade80';
+            progressCircle.style.stroke = '#4ade80';
+        } else if (progressPercent > 0.2) {
+            timeValue.style.color = '#f59e0b';
+            progressCircle.style.stroke = '#f59e0b';
+        } else {
+            timeValue.style.color = '#ef4444';
+            progressCircle.style.stroke = '#ef4444';
+        }
+
+        if (timeRemaining > 0) {
+            timeRemaining--;
+        } else {
+            clearInterval(timerInterval);
+            unlockApps();
+        }
+    }
+
+    // Change quote every 30 seconds
+    function changeQuote() {
+        currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+        const quoteText = document.getElementById('quoteText');
+        const quoteAuthor = document.getElementById('quoteAuthor');
+
+        // Fade out
+        quoteText.style.opacity = '0';
+        quoteAuthor.style.opacity = '0';
+
+        setTimeout(() => {
+            quoteText.textContent = '"' + quotes[currentQuoteIndex].text + '"';
+            quoteAuthor.textContent = '— ' + quotes[currentQuoteIndex].author;
+
+            // Fade in
+            quoteText.style.opacity = '1';
+            quoteAuthor.style.opacity = '1';
+        }, 300);
+    }
+
+    // Button functions
+    function goHome() {
+        console.log('🏠 goHome called explicitly');
+
+        if (window.Android && window.Android.goHome) {
+            window.Android.goHome();
+        } else {
+            alert('Going to home screen... 🏠\nStay strong! Focus time is still active.');
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.close();
+            }
+        }
+    }
+
+    // Initialize lock screen with data from Android
+    function initLockScreen(appName, packageName, remainingTime) {
+        console.log('🚀 Initializing LockScreen:', appName, packageName, remainingTime);
+
+        try {
+            // Update app title
+            const appTitle = document.querySelector('.app-title');
+            if (appTitle) {
+                appTitle.textContent = appName + ' is Locked';
+            }
+
+            // Update time if provided
+            if (remainingTime && remainingTime > 0) {
+                timeRemaining = remainingTime * 60; // Convert to seconds
+                totalTime = remainingTime * 60;
+
+                // Update display elements
+                const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+                const lockTimeDisplay = document.getElementById('lockTimeDisplay');
+
+                if (totalTimeDisplay) {
+                    totalTimeDisplay.textContent = remainingTime + 'min';
+                }
+                if (lockTimeDisplay) {
+                    lockTimeDisplay.textContent = remainingTime + ' minutes';
+                }
+            }
+
+            // Force update timer display
+            updateTimer();
+
+            console.log('✅ Lock screen initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing lock screen:', error);
+        }
+    }
+
+    function unlockApps() {
+        clearInterval(timerInterval);
+        alert('Well Done! 🎉\nYou\'ve successfully completed your focus time!');
+
+        // Add celebration effect
+        document.body.style.background = 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)';
+
+        setTimeout(() => {
+            if (window.Android && window.Android.onTimeUp) {
+                window.Android.onTimeUp();
+            } else {
+                location.reload();
+            }
+        }, 2000);
+    }
+
+    // Add smooth transitions to quote elements
+    function initQuoteTransitions() {
+        const quoteText = document.getElementById('quoteText');
+        const quoteAuthor = document.getElementById('quoteAuthor');
+        if (quoteText) quoteText.style.transition = 'opacity 0.3s ease';
+        if (quoteAuthor) quoteAuthor.style.transition = 'opacity 0.3s ease';
+    }
+
+    // Smart Touch Gesture Handler (Prevents Scroll Conflict)
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let touchStartTime = 0;
+    let isScrolling = false;
+
+    document.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+        touchStartTime = Date.now();
+        isScrolling = false;
+    }, { passive: true });
+
+    // Detect scroll vs gesture
+    document.addEventListener('touchmove', function(e) {
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+
+        const deltaY = Math.abs(currentY - touchStartY);
+        const deltaX = Math.abs(currentX - touchStartX);
+
+        // If significant movement detected, it's scrolling
+        if (deltaY > 15 || deltaX > 15) {
+            isScrolling = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        // Prevent gesture if user was scrolling
+        if (isScrolling) {
+            console.log('🔄 Scrolling detected, ignoring gesture');
+            return;
+        }
+
+        const touchEndY = e.changedTouches[0].clientY;
+        const touchEndTime = Date.now();
+        const difference = touchStartY - touchEndY;
+        const timeDifference = touchEndTime - touchStartTime;
+
+        // Only trigger gesture for quick, strong swipes
+        if (timeDifference < 250 && Math.abs(difference) > 120) {
+            console.log('👆 Strong gesture detected:', difference, 'px in', timeDifference, 'ms');
+
+            // Swipe up to go home (requires very strong upward swipe)
+            if (difference > 120) {
+                console.log('🏠 Strong swipe up detected - going home');
+                goHome();
+            }
+            // Swipe down to change quote (requires very strong downward swipe)
+            else if (difference < -120) {
+                console.log('📝 Strong swipe down detected - changing quote');
+                changeQuote();
+            }
+        } else {
+            console.log('🚫 Gesture ignored - not strong enough');
+        }
+    }, { passive: true });
+
+    // Initialize everything
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📱 DOM loaded, initializing...');
+
+        createParticles();
+        initQuoteTransitions();
+
+        // Start timer
+        timerInterval = setInterval(updateTimer, 1000);
+
+        // Change quote every 30 seconds
+        setInterval(changeQuote, 30000);
+
+        // Add keyboard shortcuts (for testing)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'h' || e.key === 'H') {
+                goHome();
+            } else if (e.key === 'Escape') {
+                unlockApps();
+            } else if (e.key === 'q' || e.key === 'Q') {
+                changeQuote();
+            }
+        });
+
+        console.log('✅ All initialized successfully');
+    });
+
+    // Make initLockScreen globally available immediately
+    window.initLockScreen = initLockScreen;
+    console.log('🌐 initLockScreen function registered globally');
+
+    // Random quote on load
+    setTimeout(() => {
+        changeQuote();
+    }, 2000);
+</script>
+</body>
+</html>

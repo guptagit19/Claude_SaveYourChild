@@ -48,7 +48,7 @@ public class OverlayService extends Service {
 
             TextView messageText = overlayView.findViewById(R.id.lockMessage);
             Button closeButton = overlayView.findViewById(R.id.closeButton);
-            messageText.setText("This app is currently locked.\nFocus on your goals! 🎯");
+            messageText.setText("This app is currently locked OverLayService.\nFocus on your goals! 🎯");
 
             closeButton.setOnClickListener(v -> {
                 Log.d(TAG, "Close button clicked");

@@ -162,7 +162,21 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
             Log.e(TAG, "❌ Error stopping app monitoring: " + e.getMessage());
         }
     }
-    
+
+    // Add this method to android/app/src/main/java/com/saveyourchild/AppMonitorModule.java
+
+    @ReactMethod
+    public void hideLockScreenOverlay() {
+        try {
+            Log.d(TAG, "🫥 Hiding lock screen overlay from React Native");
+            ReactNativeLockOverlay.hideOverlayStatic();
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error hiding overlay: " + e.getMessage());
+        }
+    }
+
+
+
     @ReactMethod
     public void checkAccessibilityPermission(Promise promise) {
         try {

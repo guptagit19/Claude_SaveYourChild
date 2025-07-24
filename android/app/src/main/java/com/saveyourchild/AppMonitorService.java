@@ -13,8 +13,9 @@ public class AppMonitorService extends AccessibilityService {
     
     private static final String TAG = "AppMonitorService";
     private static AppMonitorService instance;
-
-
+    private static boolean isOverlayActive = false; // ✅ Add this flag
+    private static long lastBlockTime = 0;
+    private static String lastBlockedPackage = "";
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         // only care about new windows...
@@ -39,13 +40,6 @@ public class AppMonitorService extends AccessibilityService {
             // Check if this app is in locked apps list
             if (isAppLocked(packageName)) {
                 Log.d(TAG, "Locked app detected: " + packageName);
-                // Start overlay service to show lock screen
-//                Intent overlayIntent = new Intent(this, OverlayService.class);
-//                overlayIntent.putExtra("blockedApp", packageName);
-//                startService(overlayIntent);
-//
-//                // Notify React Native
-//                notifyReactNative(packageName);
 
                 // ✅ Instead of overlay, bring React Native app to foreground
                 bringReactNativeAppToForeground(packageName);
@@ -85,42 +79,86 @@ public class AppMonitorService extends AccessibilityService {
 
 
     // ✅ Bring React Native app to foreground and navigate to LockScreen
+
     private void bringReactNativeAppToForeground(String blockedPackage) {
         try {
-            String ourPackage = getPackageName();
-            PackageManager pm = getPackageManager();
+            long currentTime = System.currentTimeMillis();
 
-            // Get app name from package name
+            // ✅ Prevent rapid duplicate calls (within 2 seconds)
+            // if (isOverlayActive ||
+            //         (blockedPackage.equals(lastBlockedPackage) &&
+            //                 currentTime - lastBlockTime < 2000)) {
+            //     Log.d(TAG, "⏭️ Ignoring duplicate block request");
+            //     return;
+            // }
+
+            lastBlockTime = currentTime;
+            lastBlockedPackage = blockedPackage;
+
             String appName = getAppNameFromPackage(blockedPackage);
+            Log.d(TAG, "🔐 Showing React Native lock screen overlay for: " + appName);
 
-            // Create intent to bring our app to foreground
-            Intent launchIntent = pm.getLaunchIntentForPackage(ourPackage);
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                launchIntent.putExtra("BLOCKED_APP_PACKAGE", blockedPackage);
-                launchIntent.putExtra("BLOCKED_APP_NAME", appName);
-                launchIntent.putExtra("ACTION", "SHOW_LOCK_SCREEN");
+            isOverlayActive = true;
 
-                startActivity(launchIntent);
+            Intent overlayIntent = new Intent(this, ReactNativeOverlayService.class);
+            overlayIntent.putExtra("appName", appName);
+            overlayIntent.putExtra("packageName", blockedPackage);
+            overlayIntent.putExtra("remainingTime", 30);
 
-                Log.d(TAG, "✅ Brought React Native app to foreground for: " + appName);
+            startService(overlayIntent);
 
-                // ✅ Small delay then notify React Native to navigate
-                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyReactNative(blockedPackage, appName);
-                    }
-                }, 500); // 500ms delay to ensure app is in foreground
+            Log.d(TAG, "✅ React Native overlay service started for: " + appName);
 
-            } else {
-                Log.e(TAG, "❌ Could not get launch intent for our app");
-            }
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error bringing app to foreground: " + e.getMessage());
-            e.printStackTrace();
+            isOverlayActive = false;
+            Log.e(TAG, "❌ Error showing overlay: " + e.getMessage());
         }
     }
+
+    // android/app/src/main/java/com/saveyourchild/AppMonitorService.java - UPDATE
+    private void showReactNativeLockScreenOverlay(String appName, String packageName) {
+        try {
+            Log.d(TAG, "🚀 Starting React Native overlay service");
+
+            Intent overlayIntent = new Intent(this, ReactNativeOverlayService.class);
+            overlayIntent.putExtra("appName", appName);
+            overlayIntent.putExtra("packageName", packageName);
+            overlayIntent.putExtra("remainingTime", 30);
+
+            startService(overlayIntent); // ✅ Service instead of Activity
+
+            Log.d(TAG, "✅ React Native overlay service started for: " + appName);
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error starting overlay service: " + e.getMessage());
+            isOverlayActive = false;
+        }
+    }
+
+    // ✅ Reset flag when overlay is hidden
+    public static void resetOverlayFlag() {
+        isOverlayActive = false;
+        Log.d(TAG, "🔄 Overlay flag reset");
+    }
+
+    // ✅ New method to show overlay
+    private void showLockScreenOverlay(String appName, String packageName) {
+        try {
+            Log.d(TAG, "✅ Lock screen overlay started for: " + appName + " packageName: "+packageName);
+            Intent overlayIntent = new Intent(this, ReactNativeLockOverlay.class);
+            overlayIntent.putExtra("appName", appName);
+            overlayIntent.putExtra("packageName", packageName);
+            overlayIntent.putExtra("remainingTime", 30);
+
+            startService(overlayIntent);
+
+            Log.d(TAG, "✅ Lock screen overlay started for: " + appName);
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error starting overlay service: " + e.getMessage());
+        }
+    }
+
 
     // ✅ Get app name from package name
     private String getAppNameFromPackage(String packageName) {

@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
       android:name=".MainApplication"
@@ -29,6 +30,17 @@
         </intent-filter>
       </activity>
 
+        <!-- ✅ CRITICAL: Add LockScreenOverlayActivity -->
+        <activity
+            android:name=".LockScreenOverlayActivity"
+            android:theme="@style/OverlayTheme"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:taskAffinity="com.saveyourchild.overlay" />
+
+
       <!-- Accessibility Service -->
         <service
             android:name=".AppMonitorService"
@@ -46,6 +58,18 @@
         <service
             android:name=".OverlayService"
             android:exported="false" />
+
+        <!-- android/app/src/main/AndroidManifest.xml -->
+        <service
+            android:name=".ReactNativeOverlayService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- ✅ Add React Native Overlay Service -->
+        <service
+            android:name=".ReactNativeLockOverlay"
+            android:exported="false"
+            android:enabled="true" />
 
     </application>
 </manifest>

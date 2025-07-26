@@ -172,8 +172,8 @@ const AppSelectionScreen = ({ navigation }) => {
           if (selectedApp) {
             // Create the session object for this app
             activeSession[packageName] = {
-              icon: '',
-              //icon: selectedApp.icon || '',
+              //icon: '',
+              icon: selectedApp.icon || '',
               appName: selectedApp.appName || 'Unknown App',
               packageName: packageName,
               accessTime: 0, // Default values - will be set in TimePicker

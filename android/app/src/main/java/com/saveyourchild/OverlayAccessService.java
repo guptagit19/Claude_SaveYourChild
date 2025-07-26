@@ -18,7 +18,14 @@ import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceError;
-import org.json.JSONArray;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class OverlayAccessService extends Service {
@@ -28,10 +35,12 @@ public class OverlayAccessService extends Service {
     private WindowManager windowManager;
     private static boolean isOverlayActive = false;
     private Handler mainHandler;
-    
-    // ✅ FIXED: Single app instead of array
+
+    // ✅ Single app data
     private String currentAppName;
     private String currentPackageName;
+    private String currentAppIcon;
+    JSONObject JsonAppData;
 
     @Override
     public void onCreate() {
@@ -52,9 +61,13 @@ public class OverlayAccessService extends Service {
             return START_NOT_STICKY;
         }
 
-        // ✅ FIXED: Get single app data from intent
-        currentAppName = intent.getStringExtra("appName");
-        currentPackageName = intent.getStringExtra("packageName");
+        String jsonStringAppData = intent.getStringExtra("appData");
+
+        if (jsonStringAppData == null) {
+            Log.e(TAG, "No appData passed!");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
 
         Log.d(TAG, "📱 Starting access screen overlay for: " + currentAppName);
 
@@ -66,14 +79,22 @@ public class OverlayAccessService extends Service {
 
         // Run on main thread
         mainHandler.post(() -> {
-            showAccessScreenOverlay();
+            if (jsonStringAppData != null) {
+                try {
+                    JsonAppData = new JSONObject(jsonStringAppData);
+                    showAccessScreenOverlay(JsonAppData);
+                } catch (JSONException e) {
+                    Log.e(TAG, "Invalid JSON in appData", e);
+                }
+            }
+
         });
 
         isOverlayActive = true;
         return START_NOT_STICKY;
     }
 
-    private void showAccessScreenOverlay() {
+    private void showAccessScreenOverlay(JSONObject jsonAppData) {
         try {
             Log.d(TAG, "🎯 Creating Access Screen WebView overlay for: " + currentAppName);
 
@@ -161,39 +182,22 @@ public class OverlayAccessService extends Service {
         }
     }
 
-    // ✅ FIXED: Initialize access screen with single app data
+    // ✅ Initialize access screen with single app data
     private void initializeAccessScreen(WebView view, int attempt) {
         try {
-            String singleAppJson = "[]";
-            
-            if (currentAppName != null && !currentAppName.isEmpty()) {
-                JSONArray appsArray = new JSONArray();
-                JSONObject appObj = new JSONObject();
-                appObj.put("appName", currentAppName);
-                appObj.put("packageName", currentPackageName != null ? currentPackageName : "");
-                appObj.put("icon", getAppIcon(currentAppName));
-                appsArray.put(appObj);
-                
-                singleAppJson = appsArray.toString().replace("'", "\\'");
-            }
+
+            String appDataJson = JsonAppData.toString().replace("\"", "\\\"");
 
             String initScript = String.format(
                     "console.log('🔄 Access screen initialization attempt %d for app: %s'); " +
-                    "if (typeof window.initializeWithSingleApp === 'function') { " +
-                    "  console.log('✅ initializeWithSingleApp found, calling...'); " +
-                    "  window.initializeWithSingleApp('%s'); " +
-                    "  console.log('✅ Access screen initialized with single app'); " +
-                    "} else if (typeof window.initializeWithApps === 'function') { " +
-                    "  console.log('✅ Using initializeWithApps fallback'); " +
-                    "  window.initializeWithApps('%s'); " +
-                    "} else { " +
-                    "  console.log('❌ No initialization function found on attempt %d'); " +
-                    "  if (typeof selectedApps !== 'undefined') { " +
-                    "    selectedApps = %s; " +
-                    "    if (typeof populateApps === 'function') populateApps(); " +
-                    "  } " +
-                    "}",
-                    attempt, currentAppName, singleAppJson, singleAppJson, attempt, singleAppJson
+                            "if (typeof window.initializeWithSingleApp === 'function') { " +
+                            "  console.log('✅ initializeWithSingleApp found, calling...'); " +
+                            "  window.initializeWithSingleApp(\"%s\"); " +
+                            "  console.log('✅ Access screen initialized with single app'); " +
+                            "} else { " +
+                            "  console.log('❌ initializeWithSingleApp not found on attempt %d'); " +
+                            "}",
+                    attempt, currentAppName, appDataJson, attempt
             );
 
             view.evaluateJavascript(initScript, result -> {
@@ -205,16 +209,18 @@ public class OverlayAccessService extends Service {
         }
     }
 
-    // Get app icon based on app name
-    private String getAppIcon(String appName) {
-        switch (appName.toLowerCase()) {
-            case "instagram": return "📷";
-            case "facebook": return "📘";
-            case "twitter": return "🐦";
-            case "tiktok": return "🎵";
-            case "youtube": return "📺";
-            case "whatsapp": return "💬";
-            case "chrome": return "🌐";
+    // ✅ Fallback emoji icons
+    private String getFallbackIcon(String packageName) {
+        if (packageName == null) return "📱";
+
+        switch (packageName.toLowerCase()) {
+            case "com.instagram.android": return "📷";
+            case "com.facebook.katana": return "📘";
+            case "com.twitter.android": return "🐦";
+            case "com.zhiliaoapp.musically": return "🎵";
+            case "com.google.android.youtube": return "📺";
+            case "com.whatsapp": return "💬";
+            case "com.android.chrome": return "🌐";
             default: return "📱";
         }
     }
@@ -228,17 +234,22 @@ public class OverlayAccessService extends Service {
 
             mainHandler.post(() -> {
                 try {
-                    // Parse session data
+                    // ✅ Parse session data and update active session
                     JSONObject sessionData = new JSONObject(sessionDataJson);
+
+                    String packageName = sessionData.getString("packageName");
                     int accessTime = sessionData.getInt("accessTime");
                     int lockTime = sessionData.getInt("lockTime");
-                    
+                    String accessStartTime = sessionData.getString("accessStartTime");
+                    String accessEndTime = sessionData.getString("accessEndTime");
+                    String lockUpToTime = sessionData.getString("lockUpToTime");
+
                     Log.d(TAG, "📊 Session Config for " + currentAppName + " - Access: " + accessTime + " min, Lock: " + lockTime + " min");
 
-                    // ✅ Save session data for single app
-                    saveSessionData(accessTime, lockTime);
+                    // ✅ Update active session in MMKV via AppMonitorModule
+                    updateActiveSession(packageName, sessionData);
 
-                    // Navigate back to main app or start monitoring
+                    // Navigate back to main app
                     Intent mainAppIntent = new Intent(OverlayAccessService.this, MainActivity.class);
                     mainAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     mainAppIntent.putExtra("sessionStarted", true);
@@ -289,8 +300,8 @@ public class OverlayAccessService extends Service {
                 JSONObject appObj = new JSONObject();
                 appObj.put("appName", currentAppName != null ? currentAppName : "Unknown App");
                 appObj.put("packageName", currentPackageName != null ? currentPackageName : "");
-                appObj.put("icon", getAppIcon(currentAppName != null ? currentAppName : ""));
-                
+                appObj.put("icon", currentAppIcon != null ? currentAppIcon : "📱");
+
                 return appObj.toString();
             } catch (Exception e) {
                 Log.e(TAG, "❌ Error getting current app: " + e.getMessage());
@@ -304,31 +315,20 @@ public class OverlayAccessService extends Service {
         }
 
         @JavascriptInterface
-        public String getPackageName() {  
+        public String getPackageName() {
             return currentPackageName != null ? currentPackageName : "";
         }
     }
 
-    // ✅ Save session data for single app
-    private void saveSessionData(int accessTime, int lockTime) {
+    // ✅ Update active session in MMKV via AppMonitorModule
+    private void updateActiveSession(String packageName, JSONObject sessionData) {
         try {
-            android.content.SharedPreferences prefs = getSharedPreferences("FocusSession", MODE_PRIVATE);
-            android.content.SharedPreferences.Editor editor = prefs.edit();
-            
-            editor.putInt("accessTime", accessTime);
-            editor.putInt("lockTime", lockTime);
-            editor.putLong("sessionStartTime", System.currentTimeMillis());
-            editor.putBoolean("isSessionActive", true);
-            
-            // ✅ Save single app data
-            editor.putString("targetAppName", currentAppName);
-            editor.putString("targetPackage", currentPackageName);
-            
-            editor.apply();
-            Log.d(TAG, "✅ Session data saved for: " + currentAppName);
-            
+            // Call AppMonitorModule to update active session
+            AppMonitorModule.updateActiveSessionForApp(packageName, sessionData.toString());
+            Log.d(TAG, "✅ Active session updated for: " + packageName);
+
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error saving session data: " + e.getMessage());
+            Log.e(TAG, "❌ Error updating active session: " + e.getMessage());
         }
     }
 
@@ -399,16 +399,4 @@ public class OverlayAccessService extends Service {
         Log.d(TAG, "💀 OverlayAccessService destroyed");
     }
 
-    // ✅ FIXED: Static method to show access screen for single app
-    public static void showAccessScreen(android.content.Context context, String appName, String packageName) {
-        try {
-            Intent intent = new Intent(context, OverlayAccessService.class);
-            intent.putExtra("appName", appName);
-            intent.putExtra("packageName", packageName);
-            context.startService(intent);
-            Log.d(TAG, "🚀 Access screen service started for: " + appName);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error starting access screen service: " + e.getMessage());
-        }
-    }
 }

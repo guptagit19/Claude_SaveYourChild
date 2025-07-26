@@ -48,7 +48,10 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
             Log.e("AppMonitorModule", "❌ Error sending event from service: " + e.getMessage());
         }
     }
-    
+
+    public static void updateActiveSessionForApp(String packageName, String string) {
+    }
+
     @Override
     public String getName() {
         return "AppMonitorModule";

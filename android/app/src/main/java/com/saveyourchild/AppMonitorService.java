@@ -21,6 +21,7 @@ public class AppMonitorService extends AccessibilityService {
     private static boolean isOverlayActive = false;
     private static long lastBlockTime = 0;
     private static String lastBlockedPackage = "";
+    JSONObject appData;
 
     // App states for decision making
     private enum AppState {
@@ -83,7 +84,7 @@ public class AppMonitorService extends AccessibilityService {
                 return AppState.NOT_IN_SESSION;
             }
 
-            JSONObject appData = activeSession.getJSONObject(packageName);
+            appData = activeSession.getJSONObject(packageName);
 
             // Check if app is active
             if (!appData.optBoolean("isActive", false)) {
@@ -150,11 +151,11 @@ public class AppMonitorService extends AccessibilityService {
             long currentTime = System.currentTimeMillis();
 
             // Prevent rapid duplicate calls
-            if (isOverlayActive ||
-                    (packageName.equals(lastBlockedPackage) && currentTime - lastBlockTime < 2000)) {
-                Log.d(TAG, "⏭️ Ignoring duplicate intervention request");
-                return;
-            }
+//            if (isOverlayActive ||
+//                    (packageName.equals(lastBlockedPackage) && currentTime - lastBlockTime < 2000)) {
+//                Log.d(TAG, "⏭️ Ignoring duplicate intervention request");
+//                return;
+//            }
 
             lastBlockTime = currentTime;
             lastBlockedPackage = packageName;
@@ -164,9 +165,11 @@ public class AppMonitorService extends AccessibilityService {
 
             switch (appState) {
                 case NEEDS_ACCESS_SETUP:
-                    Log.d(TAG, "🎯 Showing Access Screen for: " + appName);
-                    OverlayAccessService.showAccessScreen(this, appName, packageName);
-                    break;
+                 Log.d(TAG, "🎯 Showing Access Screen for: " + appName);
+                Intent accessIntent = new Intent(this, OverlayAccessService.class);
+                accessIntent.putExtra("appData", appData.toString());
+                startService(accessIntent);
+                break;
 
                 case IN_LOCK_PERIOD:
                     Log.d(TAG, "🔒 Showing Lock Screen for: " + appName);

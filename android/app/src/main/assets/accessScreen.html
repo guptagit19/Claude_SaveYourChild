@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Time Limits - Focus App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            animation: gradientShift 8s ease-in-out infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
+            50% { background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%); }
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+            position: relative;
+        }
+
+        /* Animated Background Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin: 40px 0;
+            z-index: 10;
+            position: relative;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Selected Apps Section */
+        .selected-apps-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.8s ease-out 0.4s both;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .apps-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            animation: appItemFloat 3s ease-in-out infinite;
+            min-width: 80px;
+        }
+
+        .app-item:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes appItemFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .app-item:nth-child(2n) {
+            animation-delay: 0.5s;
+        }
+
+        .app-item:nth-child(3n) {
+            animation-delay: 1s;
+        }
+
+        .app-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            animation: iconPulse 2s ease-in-out infinite;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3); }
+            50% { transform: scale(1.1); box-shadow: 0 6px 20px rgba(74, 222, 128, 0.5); }
+        }
+
+        .app-name {
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        /* Time Selection Sections */
+        .time-section {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.8s ease-out 0.6s both;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-section:nth-child(4) {
+            animation-delay: 0.8s;
+        }
+
+        .section-description {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Seek Bar Styles */
+        .seek-bar-container {
+            margin: 25px 0;
+        }
+
+        .seek-bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .current-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .seek-bar {
+            position: relative;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin: 20px 0;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .seek-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            animation: seekGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes seekGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
+        }
+
+        .seek-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .seek-thumb:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.6);
+        }
+
+        .seek-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Quick Select Options */
+        .quick-select {
+            margin-top: 25px;
+        }
+
+        .quick-select-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .quick-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .quick-option {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .quick-option:hover, .quick-option.active {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            border-color: #4ade80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 25px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.8s ease-out 1s both;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .summary-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+
+        .summary-icon {
+            font-size: 20px;
+            width: 24px;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Start Session Button */
+        .button-container {
+            position: sticky;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            margin: 20px -20px -20px -20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .start-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            border: none;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4);
+            animation: buttonPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes buttonPulse {
+            0%, 100% { box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4); }
+            50% { box-shadow: 0 12px 35px rgba(74, 222, 128, 0.6); }
+        }
+
+        .start-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(74, 222, 128, 0.6);
+        }
+
+        .start-button:active {
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title {
+                font-size: 28px;
+            }
+
+            .apps-grid {
+                gap: 10px;
+            }
+
+            .app-item {
+                min-width: 70px;
+                padding: 12px;
+            }
+
+            .app-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .quick-options {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .time-section, .selected-apps-container, .summary-card {
+                padding: 20px;
+            }
+
+            .start-button {
+                font-size: 18px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">Set Time Limits</h1>
+            <p class="subtitle">Choose your access time and lock duration</p>
+        </div>
+
+        <!-- Selected Apps Section -->
+        <div class="selected-apps-container">
+            <h2 class="section-title">
+                📱 Selected Apps (<span id="app-count">0</span>)
+            </h2>
+            <div class="apps-grid" id="apps-grid">
+                <!-- Apps will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Access Time Selection -->
+        <div class="time-section">
+            <h2 class="section-title">🎯 Access Time</h2>
+            <p class="section-description">How long can you use these apps?</p>
+            
+            <div class="seek-bar-container">
+                <div class="seek-bar-label">
+                    <span>Access Time</span>
+                    <span class="current-value" id="access-time-value">15 minutes</span>
+                </div>
+                <div class="seek-bar" id="access-seek-bar">
+                    <div class="seek-thumb" id="access-thumb"></div>
+                </div>
+                <div class="seek-labels">
+                    <span>5 min</span>
+                    <span>1 hour</span>
+                </div>
+            </div>
+
+            <div class="quick-select">
+                <h3 class="quick-select-title">Quick Select</h3>
+                <div class="quick-options" id="access-quick-options">
+                    <div class="quick-option" data-value="5">5 min</div>
+                    <div class="quick-option active" data-value="15">15 min</div>
+                    <div class="quick-option" data-value="30">30 min</div>
+                    <div class="quick-option" data-value="45">45 min</div>
+                    <div class="quick-option" data-value="60">1 hour</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lock Duration Selection -->
+        <div class="time-section">
+            <h2 class="section-title">🔒 Lock Duration</h2>
+            <p class="section-description">How long should these apps be locked after use?</p>
+            
+            <div class="seek-bar-container">
+                <div class="seek-bar-label">
+                    <span>Lock Duration</span>
+                    <span class="current-value" id="lock-time-value">1 hour</span>
+                </div>
+                <div class="seek-bar" id="lock-seek-bar">
+                    <div class="seek-thumb" id="lock-thumb"></div>
+                </div>
+                <div class="seek-labels">
+                    <span>15 min</span>
+                    <span>2 hours</span>
+                </div>
+            </div>
+
+            <div class="quick-select">
+                <h3 class="quick-select-title">Quick Select</h3>
+                <div class="quick-options" id="lock-quick-options">
+                    <div class="quick-option" data-value="15">15 min</div>
+                    <div class="quick-option" data-value="30">30 min</div>
+                    <div class="quick-option active" data-value="60">1 hour</div>
+                    <div class="quick-option" data-value="90">1.5 hours</div>
+                    <div class="quick-option" data-value="120">2 hours</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="summary-card">
+            <h3 class="summary-title">📋 Session Summary</h3>
+            <div class="summary-row">
+                <span class="summary-icon">🎯</span>
+                <span class="summary-text">Access Time: <span id="summary-access">15 minutes</span></span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-icon">🔒</span>
+                <span class="summary-text">Lock Duration: <span id="summary-lock">1 hour</span></span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-icon">📱</span>
+                <span class="summary-text">Apps: <span id="summary-apps">0</span> selected</span>
+            </div>
+        </div>
+
+        <!-- Start Session Button -->
+        <div class="button-container">
+            <button class="start-button" onclick="handleStartSession()">
+                <span style="font-size: 28px;">▶️</span>
+                <span>Start Focus Session</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Sample apps data (you can modify this)
+        const selectedApps = [
+            { appName: 'Instagram', icon: '📷' },
+            { appName: 'Facebook', icon: '📘' },
+            { appName: 'Twitter', icon: '🐦' },
+            { appName: 'TikTok', icon: '🎵' },
+            { appName: 'YouTube', icon: '📺' },
+            { appName: 'WhatsApp', icon: '💬' }
+        ];
+
+        // Time values in minutes
+        let selectedAccessTime = 15; // default 15 minutes
+        let selectedLockTime = 60; // default 1 hour
+
+        // Initialize particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = Math.random() * 6 + 4 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+// Add this to accessScreen.html JavaScript
+
+// ✅ NEW: Initialize with single app
+        function initializeWithSingleApp(appJsonString) {
+            try {
+                console.log('🔄 Initializing with single app from Android:', appJsonString);
+                
+                if (appJsonString && appJsonString !== '[]') {
+                    const appsData = JSON.parse(appJsonString);
+                    selectedApps = appsData; // This will be array with single app
+                    populateApps();
+                    console.log('✅ Single app populated from Android');
+                }
+            } catch (error) {
+                console.error('❌ Error initializing single app:', error);
+            }
+        }
+
+        // ✅ Update populateApps to handle single app better
+        function populateApps() {
+            const appsGrid = document.getElementById('apps-grid');
+            const appCount = document.getElementById('app-count');
+            
+            appsGrid.innerHTML = '';
+            appCount.textContent = selectedApps.length;
+            
+            if (selectedApps.length === 1) {
+                // ✅ Special styling for single app
+                const app = selectedApps[0];
+                const appItem = document.createElement('div');
+                appItem.className = 'app-item single-app-item';
+                appItem.style.animationDelay = '0s';
+                appItem.style.transform = 'scale(1.2)'; // Make it bigger for single app
+                
+                appItem.innerHTML = `
+                    <div class="app-icon" style="width: 70px; height: 70px; font-size: 32px;">${app.icon}</div>
+                    <div class="app-name" style="font-size: 16px; font-weight: bold;">${app.appName}</div>
+                `;
+                
+                appsGrid.appendChild(appItem);
+            } else {
+                // Regular multi-app display (fallback)
+                selectedApps.forEach((app, index) => {
+                    const appItem = document.createElement('div');
+                    appItem.className = 'app-item';
+                    appItem.style.animationDelay = `${index * 0.1}s`;
+                    
+                    appItem.innerHTML = `
+                        <div class="app-icon">${app.icon}</div>
+                        <div class="app-name">${app.appName}</div>
+                    `;
+                    
+                    appsGrid.appendChild(appItem);
+                });
+            }
+            
+            // Update summary
+            document.getElementById('summary-apps').textContent = selectedApps.length;
+        }
+
+
+        // Format time for display
+        function formatTime(minutes) {
+            if (minutes < 60) {
+                return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            } else {
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                if (remainingMinutes === 0) {
+                    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+                } else {
+                    return `${hours}h ${remainingMinutes}m`;
+                }
+            }
+        }
+
+        // Initialize seek bars
+        function initSeekBars() {
+            // Access time seek bar (5 min to 60 min)
+            const accessBar = document.getElementById('access-seek-bar');
+            const accessThumb = document.getElementById('access-thumb');
+            const accessValueDisplay = document.getElementById('access-time-value');
+            
+            function updateAccessSeekBar() {
+                const percentage = ((selectedAccessTime - 5) / (60 - 5)) * 100;
+                accessBar.style.setProperty('--progress', percentage + '%');
+                accessBar.querySelector('::before') || (accessBar.style.background = `linear-gradient(to right, #4ade80 ${percentage}%, rgba(255,255,255,0.3) ${percentage}%)`);
+                accessBar.style.background = `linear-gradient(to right, #4ade80 ${percentage}%, rgba(255,255,255,0.3) ${percentage}%)`;
+                accessThumb.style.left = percentage + '%';
+                accessValueDisplay.textContent = formatTime(selectedAccessTime);
+                document.getElementById('summary-access').textContent = formatTime(selectedAccessTime);
+            }
+
+            // Lock time seek bar (15 min to 120 min)
+            const lockBar = document.getElementById('lock-seek-bar');
+            const lockThumb = document.getElementById('lock-thumb');
+            const lockValueDisplay = document.getElementById('lock-time-value');
+            
+            function updateLockSeekBar() {
+                const percentage = ((selectedLockTime - 15) / (120 - 15)) * 100;
+                lockBar.style.background = `linear-gradient(to right, #4ade80 ${percentage}%, rgba(255,255,255,0.3) ${percentage}%)`;
+                lockThumb.style.left = percentage + '%';
+                lockValueDisplay.textContent = formatTime(selectedLockTime);
+                document.getElementById('summary-lock').textContent = formatTime(selectedLockTime);
+            }
+
+            // Initial update
+            updateAccessSeekBar();
+            updateLockSeekBar();
+
+            // Access seek bar interaction
+            let isDraggingAccess = false;
+            accessBar.addEventListener('mousedown', startAccessDrag);
+            accessBar.addEventListener('touchstart', startAccessDrag);
+            
+            function startAccessDrag(e) {
+                isDraggingAccess = true;
+                updateAccessFromEvent(e);
+            }
+
+            function updateAccessFromEvent(e) {
+                if (!isDraggingAccess && e.type !== 'mousedown' && e.type !== 'touchstart') return;
+                
+                const rect = accessBar.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const percentage = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+                selectedAccessTime = Math.round(5 + (percentage / 100) * (60 - 5));
+                updateAccessSeekBar();
+                updateQuickSelectActive('access', selectedAccessTime);
+            }
+
+            // Lock seek bar interaction
+            let isDraggingLock = false;
+            lockBar.addEventListener('mousedown', startLockDrag);
+            lockBar.addEventListener('touchstart', startLockDrag);
+            
+            function startLockDrag(e) {
+                isDraggingLock = true;
+                updateLockFromEvent(e);
+            }
+
+            function updateLockFromEvent(e) {
+                if (!isDraggingLock && e.type !== 'mousedown' && e.type !== 'touchstart') return;
+                
+                const rect = lockBar.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const percentage = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+                selectedLockTime = Math.round(15 + (percentage / 100) * (120 - 15));
+                updateLockSeekBar();
+                updateQuickSelectActive('lock', selectedLockTime);
+            }
+
+            // Global mouse/touch events
+            document.addEventListener('mousemove', (e) => {
+                if (isDraggingAccess) updateAccessFromEvent(e);
+                if (isDraggingLock) updateLockFromEvent(e);
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (isDraggingAccess) updateAccessFromEvent(e);
+                if (isDraggingLock) updateLockFromEvent(e);
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDraggingAccess = false;
+                isDraggingLock = false;
+            });
+
+            document.addEventListener('touchend', () => {
+                isDraggingAccess = false;
+                isDraggingLock = false;
+            });
+        }
+
+        // Quick select functionality
+        function initQuickSelect() {
+            // Access time quick select
+            const accessOptions = document.getElementById('access-quick-options');
+            accessOptions.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-option')) {
+                    selectedAccessTime = parseInt(e.target.dataset.value);
+                    updateQuickSelectActive('access', selectedAccessTime);
+                    initSeekBars(); // Update seek bar
+                }
+            });
+
+            // Lock time quick select
+            const lockOptions = document.getElementById('lock-quick-options');
+            lockOptions.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-option')) {
+                    selectedLockTime = parseInt(e.target.dataset.value);
+                    updateQuickSelectActive('lock', selectedLockTime);
+                    initSeekBars(); // Update seek bar
+                }
+            });
+        }
+
+        function updateQuickSelectActive(type, value) {
+            const options = document.getElementById(`${type}-quick-options`).children;
+            for (let option of options) {
+                option.classList.remove('active');
+                if (parseInt(option.dataset.value) === value) {
+                    option.classList.add('active');
+                }
+            }
+        }
+
+        // Handle start session
+        function handleStartSession() {
+            if (!selectedAccessTime || !selectedLockTime) {
+                alert('❌ Error: Please select both access time and lock time');
+                return;
+            }
+
+            if (selectedApps.length === 0) {
+                alert('❌ Error: No apps selected');
+                return;
+            }
+
+            const sessionData = {
+                apps: selectedApps,
+                accessTime: selectedAccessTime,
+                lockTime: selectedLockTime,
+                startTime: new Date().toISOString(),
+                isActive: true,
+            };
+
+            // Show confirmation
+            const confirmMessage = `🎯 Ready to start focus session?
+
+📱 Apps: ${selectedApps.length} selected
+⏱️ Access Time: ${formatTime(selectedAccessTime)}
+🔒 Lock Duration: ${formatTime(selectedLockTime)}
+
+Click OK to begin your focus journey! 🚀`;
+
+            if (confirm(confirmMessage)) {
+                // Add success animation
+                document.body.style.background = 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)';
+                
+                // Show success message
+                alert('🎉 Focus Session Started!\n\nStay focused and achieve your goals! 💪');
+                
+                // Here you can navigate to the active session screen
+                console.log('Session Data:', sessionData);
+                
+                // Simulate navigation after 2 seconds
+                setTimeout(() => {
+                    // In a real app, you would navigate to the ActiveSession screen
+                    window.location.reload(); // For demo purposes
+                }, 2000);
+            }
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Time Picker Screen...');
+            
+            createParticles();
+            populateApps();
+            initSeekBars();
+            initQuickSelect();
+            
+            console.log('✅ Time Picker Screen initialized successfully');
+        });
+
+        // Add some interactive effects
+        document.addEventListener('click', (e) => {
+            // Create ripple effect on clicks
+            const ripple = document.createElement('div');
+            ripple.style.position = 'fixed';
+            ripple.style.left = e.clientX + 'px';
+            ripple.style.top = e.clientY + 'px';
+            ripple.style.width = '20px';
+            ripple.style.height = '20px';
+            ripple.style.background = 'rgba(74, 222, 128, 0.6)';
+            ripple.style.borderRadius = '50%';
+            ripple.style.transform = 'translate(-50%, -50%)';
+            ripple.style.pointerEvents = 'none';
+            ripple.style.animation = 'rippleEffect 0.6s ease-out';
+            ripple.style.zIndex = '1000';
+            
+            document.body.appendChild(ripple);
+            
+            setTimeout(() => {
+                document.body.removeChild(ripple);
+            }, 600);
+        });
+
+        // Add ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rippleEffect {
+                0% {
+                    transform: translate(-50%, -50%) scale(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    handleStartSession();
+                    break;
+                case 'ArrowLeft':
+                    // Decrease access time
+                    selectedAccessTime = Math.max(5, selectedAccessTime - 5);
+                    initSeekBars();
+                    updateQuickSelectActive('access', selectedAccessTime);
+                    break;
+                case 'ArrowRight':
+                    // Increase access time
+                    selectedAccessTime = Math.min(60, selectedAccessTime + 5);
+                    initSeekBars();
+                    updateQuickSelectActive('access', selectedAccessTime);
+                    break;
+                case 'ArrowUp':
+                    // Increase lock time
+                    selectedLockTime = Math.min(120, selectedLockTime + 15);
+                    initSeekBars();
+                    updateQuickSelectActive('lock', selectedLockTime);
+                    break;
+                case 'ArrowDown':
+                    // Decrease lock time
+                    selectedLockTime = Math.max(15, selectedLockTime - 15);
+                    initSeekBars();
+                    updateQuickSelectActive('lock', selectedLockTime);
+                    break;
+            }
+        });
+
+        // Add smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        // Add loading animation on start
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transform = 'translateY(20px)';
+            document.body.style.transition = 'all 0.8s ease-out';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                document.body.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

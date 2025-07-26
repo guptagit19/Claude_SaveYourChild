@@ -40,7 +40,6 @@ public class AppMonitorService extends AccessibilityService {
             // Check if this app is in locked apps list
             if (isAppLocked(packageName)) {
                 Log.d(TAG, "Locked app detected: " + packageName);
-
                 // ✅ Instead of overlay, bring React Native app to foreground
                 bringReactNativeAppToForeground(packageName);
             }
@@ -64,7 +63,9 @@ public class AppMonitorService extends AccessibilityService {
     
     private boolean isAppLocked(String packageName) {
         Log.d(TAG, "Checking if app is locked: " + packageName);
-        
+
+        String rules  = AppMonitorModule.getActiveSession();
+        Log.d(TAG, "Checking rules: -> " + rules);
         // Temporary hardcoded apps for testing, check from MMKV Storage
         boolean isLocked = packageName.equals("com.instagram.android") ||
             packageName.equals("com.whatsapp") ||
@@ -77,9 +78,8 @@ public class AppMonitorService extends AccessibilityService {
         return isLocked;
     }
 
-
+/*
     // ✅ Bring React Native app to foreground and navigate to LockScreen
-
     private void bringReactNativeAppToForeground(String blockedPackage) {
         try {
             long currentTime = System.currentTimeMillis();
@@ -114,6 +114,34 @@ public class AppMonitorService extends AccessibilityService {
             Log.e(TAG, "❌ Error showing overlay: " + e.getMessage());
         }
     }
+
+    */
+
+    // Update this method in AppMonitorService.java
+    private void bringReactNativeAppToForeground(String blockedPackage) {
+        try {
+            long currentTime = System.currentTimeMillis();
+
+            lastBlockTime = currentTime;
+            lastBlockedPackage = blockedPackage;
+
+            String appName = getAppNameFromPackage(blockedPackage);
+            Log.d(TAG, "🔐 Showing access screen for: " + appName);
+
+            isOverlayActive = true;
+
+            // ✅ FIXED: Show access screen for single app
+            OverlayAccessService.showAccessScreen(this, appName, blockedPackage);
+
+            Log.d(TAG, "✅ Access screen overlay started for: " + appName);
+
+        } catch (Exception e) {
+            isOverlayActive = false;
+            Log.e(TAG, "❌ Error showing access screen overlay: " + e.getMessage());
+        }
+    }
+
+
 
     // android/app/src/main/java/com/saveyourchild/AppMonitorService.java - UPDATE
     private void showReactNativeLockScreenOverlay(String appName, String packageName) {

@@ -66,24 +66,9 @@ const AppSelectionScreen = ({ navigation }) => {
       const apps = await AppMonitorService.getInstalledApps();
 
       if (apps && apps.length > 0) {
-        // Filter popular social media apps
-        //Alert.alert('Apps found.')
-        // const socialApps = apps.filter(app =>
-        //   app.packageName.includes('instagram') ||
-        //   app.packageName.includes('facebook') ||
-        //   app.packageName.includes('whatsapp') ||
-        //   app.packageName.includes('youtube') ||
-        //   app.packageName.includes('tiktok') ||
-        //   app.packageName.includes('snapchat') ||
-        //   app.packageName.includes('twitter') ||
-        //   app.packageName.includes('telegram') ||
-        //   app.packageName.includes('musically')
-        // );
-        //setInstalledApps(socialApps.length > 0 ? socialApps : apps.slice(0, 20));
         setInstalledApps(apps);
       } else {
         // Fallback to mock data
-        //Alert.alert('No apps found.')
         setInstalledApps(MOCK_APPS);
       }
     } catch (error) {
@@ -93,34 +78,132 @@ const AppSelectionScreen = ({ navigation }) => {
     }
   };
 
+
   const loadPreviouslySelectedApps = async () => {
     try {
-      const savedApps = StorageService.getLockedApps();
-      if (savedApps.length > 0) {
-        setSelectedApps(savedApps.map(app => app.packageName));
+      // Get active session from MMKV
+      const activeSession = StorageService.getActiveSession();
+      console.log('✅ loadPreviouslySelectedApps', activeSession);
+      AppMonitorService.updateActiveSession(
+        JSON.stringify(StorageService.getActiveSession()),
+      );
+      if (activeSession && Object.keys(activeSession).length > 0) {
+        // Extract packageNames from activeSession keys
+        const selectedPackageNames = Object.keys(activeSession);
+        setSelectedApps(selectedPackageNames);
+
+        console.log(
+          '✅ Loaded previously selected apps from activeSession:',
+          selectedPackageNames,
+        );
+      } else {
+        // Fallback to old method if activeSession is empty
+        const savedApps = StorageService.getLockedApps();
+        if (savedApps.length > 0) {
+          setSelectedApps(savedApps.map(app => app.packageName));
+        }
+        console.log(
+          '✅ savedApps Else:',
+          savedApps,
+        );
       }
     } catch (error) {
       console.error('Error loading previously selected apps:', error);
     }
   };
 
-  const toggleAppSelection = packageName => {
-    setSelectedApps(prev => {
-      if (prev.includes(packageName)) {
-        return prev.filter(name => name !== packageName);
-      } else {
-        // Limit to 5 apps for MVP
-        if (prev.length >= 5) {
-          Alert.alert(
-            'Limit Reached',
-            'You can select maximum 5 apps in the MVP version.',
-            [{ text: 'OK' }],
-          );
-          return prev;
+  const toggleAppSelection = async packageName => {
+    try {
+      // Get current active session from MMKV
+      let activeSession = {};
+      try {
+        const existingSession = StorageService.getActiveSession();
+        if (existingSession) {
+          activeSession =
+            typeof existingSession === 'string'
+              ? JSON.parse(existingSession)
+              : existingSession;
         }
-        return [...prev, packageName];
+      } catch (error) {
+        console.log('No existing active session found, creating new one');
+        activeSession = {};
       }
-    });
+
+      setSelectedApps(prev => {
+        if (prev.includes(packageName)) {
+          // App is being UNSELECTED - remove from activeSession
+          console.log(`🗑️ Removing ${packageName} from active session`);
+
+          // Remove the packageName key from activeSession
+          delete activeSession[packageName];
+
+          // Save updated activeSession to MMKV
+          StorageService.setActiveSession(activeSession);
+          AppMonitorService.updateActiveSession(
+            JSON.stringify(StorageService.getActiveSession()),
+          );
+
+          console.log(
+            'Updated activeSession after removal:',
+            JSON.stringify(StorageService.getActiveSession()),
+          );
+
+          return prev.filter(name => name !== packageName);
+        } else {
+          // App is being SELECTED - add to activeSession
+
+          // Limit to 5 apps for MVP
+          if (prev.length >= 5) {
+            Alert.alert(
+              'Limit Reached',
+              'You can select maximum 5 apps in the MVP version.',
+              [{ text: 'OK' }],
+            );
+            return prev;
+          }
+
+          console.log(`➕ Adding ${packageName} to active session`);
+
+          // Find the app details from installedApps
+          const selectedApp = installedApps.find(
+            app => app.packageName === packageName,
+          );
+
+          if (selectedApp) {
+            // Create the session object for this app
+            activeSession[packageName] = {
+              icon: '',
+              //icon: selectedApp.icon || '',
+              appName: selectedApp.appName || 'Unknown App',
+              packageName: packageName,
+              accessTime: 0, // Default values - will be set in TimePicker
+              lockTime: 0, // Default values - will be set in TimePicker
+              accessStartTime: '',
+              accessEndTime: '',
+              lockUpToTime: '',
+              noreels: false,
+              wallpaper: '',
+              isActive: true,
+            };
+
+            // Save updated activeSession to MMKV
+            StorageService.setActiveSession(activeSession);
+            AppMonitorService.updateActiveSession(
+              JSON.stringify(StorageService.getActiveSession()),
+            );
+            console.log(
+              'Updated activeSession after addition:',
+              JSON.stringify(StorageService.getActiveSession()),
+            );
+          }
+
+          return [...prev, packageName];
+        }
+      });
+    } catch (error) {
+      console.error('Error in toggleAppSelection:', error);
+      Alert.alert('Error', 'Failed to update app selection. Please try again.');
+    }
   };
 
   const handleContinue = async () => {
@@ -201,7 +284,6 @@ const AppSelectionScreen = ({ navigation }) => {
         <Text style={styles.subtitle}>
           Select apps that distract you the most
         </Text>
-        <Text style={styles.limit}>(Total Apps - {installedApps.length})</Text>
         <Text style={styles.limit}>({selectedApps.length}/5 selected)</Text>
 
         {/* Permission Status */}

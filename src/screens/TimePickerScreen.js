@@ -36,9 +36,9 @@ const TimePickerScreen = ({ navigation, route }) => {
     };
 
     // Save to MMKV storage
-    StorageService.setActiveSession(sessionData);
+    //StorageService.setActiveSession(sessionData);
     console.log('ActiveSession - ', StorageService.getActiveSession());
-    StorageService.setLockedApps(selectedApps);
+    //StorageService.setLockedApps(selectedApps);
     console.log('LockedApps - ', StorageService.getLockedApps());
 
     navigation.navigate('ActiveSession', {

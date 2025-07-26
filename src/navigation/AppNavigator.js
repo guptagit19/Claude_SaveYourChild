@@ -28,7 +28,7 @@ const AppNavigator = () => {
       <Stack.Screen
         name="AppSelection"
         component={AppSelectionScreen}
-        options={{ title: 'Select Apps to Control' }}
+        options={{ title: 'SaveYourChild From Mobile Addict' }}
       />
 
       <Stack.Screen

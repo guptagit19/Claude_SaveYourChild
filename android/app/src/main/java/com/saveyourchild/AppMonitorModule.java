@@ -11,10 +11,8 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.Base64;
 import android.util.Log;
-
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.ArrayList;
@@ -24,6 +22,8 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
     private ReactApplicationContext reactContext;
     private static final String TAG = "AppMonitorModule";
     private static AppMonitorModule moduleInstance;
+      // static field in Java is the equivalent of Kotlin companion object @JvmStatic
+    private static String activeSession = "{}";
 
     public AppMonitorModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -302,6 +302,19 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             Log.e(TAG, "❌ Error navigating to home: " + e.getMessage());
         }
+    }
+
+
+      /** JS → Native: replace the rules JSON */
+    @ReactMethod
+    public void updateActiveSession(String JSactiveSession) {
+        Log.d(TAG, "updatedActiveSession → " + JSactiveSession);
+        activeSession = JSactiveSession;
+    }
+
+    /** Optional: expose a getter so other Java classes can read the latest rules */
+    public static String getActiveSession() {
+        return activeSession;
     }
 
 }

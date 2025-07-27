@@ -595,6 +595,14 @@
             ❌ Cancel
         </button>
     </div>
+
+    <!-- Add this button for debugging (remove in production) -->
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 9999;">
+        <button onclick="debugAndroidAccess()" style="background: #ff4444; color: white; border: none; padding: 10px; border-radius: 5px;">
+            🔍 Debug
+        </button>
+    </div>
+
 </div>
 
 <script>
@@ -608,6 +616,64 @@
     // Time values in minutes
     let selectedAccessTime = 15; // default 15 minutes
     let selectedLockTime = 60; // default 1 hour
+
+
+    // ✅ Debug function to test AndroidAccess
+    function debugAndroidAccess() {
+        console.log('🔍 === DEBUG SESSION START ===');
+        
+        // Check AndroidAccess
+        console.log('AndroidAccess available:', typeof AndroidAccess !== 'undefined');
+        
+        if (typeof AndroidAccess !== 'undefined') {
+            console.log('AndroidAccess object:', AndroidAccess);
+            console.log('Available methods:', Object.getOwnPropertyNames(AndroidAccess));
+            
+            // Test each method
+            try {
+                if (AndroidAccess.logMessage) {
+                    AndroidAccess.logMessage('Test message from WebView');
+                    console.log('✅ logMessage works');
+                }
+                
+                if (AndroidAccess.getAppName) {
+                    const appName = AndroidAccess.getAppName();
+                    console.log('✅ getAppName:', appName);
+                }
+                
+                if (AndroidAccess.getPackageName) {
+                    const packageName = AndroidAccess.getPackageName();
+                    console.log('✅ getPackageName:', packageName);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error testing AndroidAccess methods:', error);
+            }
+        }
+        
+        // Test session data creation
+        const testSessionData = {
+            packageName: currentApp.packageName || 'test.package',
+            appName: currentApp.appName || 'Test App',
+            icon: currentApp.icon || '📱',
+            accessTime: selectedAccessTime,
+            lockTime: selectedLockTime,
+            accessStartTime: new Date().toISOString(),
+            accessEndTime: new Date(Date.now() + 15*60*1000).toISOString(),
+            lockUpToTime: new Date(Date.now() + 75*60*1000).toISOString(),
+            noreels: false,
+            wallpaper: '',
+            isActive: true
+        };
+        
+        console.log('📊 Test session data:', testSessionData);
+        console.log('📊 JSON string:', JSON.stringify(testSessionData));
+        
+        console.log('🔍 === DEBUG SESSION END ===');
+    }
+
+
+
 
     // Initialize particles
     function createParticles() {
@@ -817,14 +883,27 @@
         }
     }
 
-    // ✅ Handle start session - Update active session rules
+    // ✅ Enhanced handleStartSession with debugging
     function handleStartSession() {
+        console.log('🚀 handleStartSession called');
+        
+        // ✅ Debug: Check AndroidAccess availability
+        console.log('🔍 AndroidAccess available?', typeof AndroidAccess !== 'undefined');
+        if (typeof AndroidAccess !== 'undefined') {
+            console.log('✅ AndroidAccess methods:', Object.getOwnPropertyNames(AndroidAccess));
+        }
+
+        // ✅ Debug: Check current app data
+        console.log('📱 Current app data:', currentApp);
+
         if (!selectedAccessTime || !selectedLockTime) {
+            console.log('❌ Time validation failed - Access:', selectedAccessTime, 'Lock:', selectedLockTime);
             alert('❌ Error: Please select both access time and lock time');
             return;
         }
 
         if (!currentApp.packageName) {
+            console.log('❌ Package name missing:', currentApp.packageName);
             alert('❌ Error: No app selected');
             return;
         }
@@ -838,7 +917,7 @@
         const sessionData = {
             packageName: currentApp.packageName,
             appName: currentApp.appName,
-            icon: currentApp.icon,
+            //icon: currentApp.icon,
             accessTime: selectedAccessTime,
             lockTime: selectedLockTime,
             accessStartTime: accessStartTime.toISOString(),
@@ -849,33 +928,62 @@
             isActive: true
         };
 
+        // ✅ Debug: Log session data
+        console.log('📊 Session data created:', sessionData);
+        console.log('📊 Session data JSON:', JSON.stringify(sessionData, null, 2));
+
         // Show confirmation
         const confirmMessage = `🎯 Ready to start focus session for ${currentApp.appName}?
 
-⏱️ Access Time: ${formatTime(selectedAccessTime)}
-🔒 Lock Duration: ${formatTime(selectedLockTime)}
+    ⏱️ Access Time: ${formatTime(selectedAccessTime)}
+    🔒 Lock Duration: ${formatTime(selectedLockTime)}
 
-Click OK to begin your focus journey! 🚀`;
+    Click OK to begin your focus journey! 🚀`;
 
-        if (confirm(confirmMessage)) {
+        //if (confirm(confirmMessage)) {
+            console.log('✅ User confirmed session start');
+            
             // Add success animation
             document.body.style.background = 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)';
 
             // Show success message
             alert('🎉 Focus Session Started!\n\nStay focused and achieve your goals! 💪');
 
-            // ✅ Send data to Android
-            if (typeof AndroidAccess !== 'undefined') {
-                AndroidAccess.onFocusSessionStart(JSON.stringify(sessionData));
-            } else {
-                console.log('Session Data:', sessionData);
-                // Fallback for testing
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+            // ✅ Enhanced Android communication with error handling
+            try {
+                if (typeof AndroidAccess !== 'undefined' && AndroidAccess.onFocusSessionStart) {
+                    console.log('📤 Calling AndroidAccess.onFocusSessionStart...');
+                    
+                    const jsonString = JSON.stringify(sessionData);
+                    console.log('📤 Sending JSON:', jsonString);
+                    
+                    AndroidAccess.onFocusSessionStart(jsonString);
+                    console.log('✅ AndroidAccess.onFocusSessionStart called successfully');
+                    
+                    // ✅ Log success to Android
+                    if (AndroidAccess.logMessage) {
+                        AndroidAccess.logMessage('Session data sent successfully: ' + currentApp.appName);
+                    }
+                    
+                } else {
+                    console.warn('⚠️ AndroidAccess not available, using fallback');
+                    console.log('📊 Session Data (Fallback):', sessionData);
+                    
+                    // Enhanced fallback for testing
+                    setTimeout(() => {
+                        console.log('🔄 Fallback: Reloading page...');
+                        window.location.reload();
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('❌ Error calling AndroidAccess:', error);
+                alert('❌ Error: Failed to start session. Please try again.');
             }
-        }
+       // } else {
+        //    console.log('❌ User cancelled session start');
+        //}
     }
+
 
     // ✅ Go Home function
     function goHome() {

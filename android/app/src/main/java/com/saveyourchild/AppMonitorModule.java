@@ -13,6 +13,9 @@ import android.util.Base64;
 import android.util.Log;
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.ArrayList;
@@ -49,8 +52,69 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
         }
     }
 
-    public static void updateActiveSessionForApp(String packageName, String string) {
+    // android/app/src/main/java/com/saveyourchild/AppMonitorModule.java
+
+    @ReactMethod
+    public static void updateActiveSessionForApp(String packageName, String sessionDataJson) {
+        try {
+            Log.d("AppMonitorModule", "🔄 Updating active session for: " + packageName);
+            Log.d("AppMonitorModule", "📊 Session data: " + sessionDataJson);
+
+            // Get current active session from static field
+            String currentSessionJson = getActiveSession();
+            JSONObject activeSessionObj;
+
+            if (currentSessionJson != null && !currentSessionJson.isEmpty() && !currentSessionJson.equals("{}")) {
+                activeSessionObj = new JSONObject(currentSessionJson);
+            } else {
+                activeSessionObj = new JSONObject();
+            }
+
+            // Parse new session data (without icon)
+            JSONObject newSessionData = new JSONObject(sessionDataJson);
+
+            // ✅ Add icon from existing session data if available
+            if (activeSessionObj.has(packageName)) {
+                JSONObject existingAppData = activeSessionObj.getJSONObject(packageName);
+                if (existingAppData.has("icon") && !existingAppData.getString("icon").isEmpty()) {
+                    newSessionData.put("icon", existingAppData.getString("icon"));
+                    Log.d("AppMonitorModule", "✅ Preserved existing icon for: " + packageName);
+                }
+            }
+
+            // Update the specific app's session data
+            activeSessionObj.put(packageName, newSessionData);
+
+            // ✅ Update the static field
+            String updatedSessionJson = activeSessionObj.toString();
+            // call the instance method on moduleInstance
+            if (moduleInstance != null) {
+                 moduleInstance.updateActiveSession(updatedSessionJson);
+            }
+
+            Log.d("AppMonitorModule", "✅ Active session updated successfully for: " + packageName);
+            Log.d("AppMonitorModule", "📊 Updated session: " + updatedSessionJson);
+
+            // ✅ Also notify React Native side to update MMKV
+            if (moduleInstance != null) {
+                WritableMap params = Arguments.createMap();
+                params.putString("activeSession", updatedSessionJson);
+                moduleInstance.sendEvent("ActiveSessionUpdated", params);
+            }
+
+        } catch (Exception e) {
+            Log.e("AppMonitorModule", "❌ Error updating active session: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
+    // ✅ Add this method to update static field
+    @ReactMethod
+    public void updateActiveSession(String jsActiveSession) {
+        Log.d(TAG, "🔄 updateActiveSession called with: " + jsActiveSession);
+        activeSession = jsActiveSession;
+    }
+
 
     @Override
     public String getName() {
@@ -305,14 +369,6 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             Log.e(TAG, "❌ Error navigating to home: " + e.getMessage());
         }
-    }
-
-
-      /** JS → Native: replace the rules JSON */
-    @ReactMethod
-    public void updateActiveSession(String JSactiveSession) {
-        Log.d(TAG, "updatedActiveSession → " + JSactiveSession);
-        activeSession = JSactiveSession;
     }
 
     /** Optional: expose a getter so other Java classes can read the latest rules */

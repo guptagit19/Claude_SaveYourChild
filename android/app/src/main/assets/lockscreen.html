@@ -1,4 +1,3 @@
-<!-- android/app/src/main/assets/lockscreen.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +22,113 @@
         @keyframes gradientShift {
             0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
             50% { background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%); }
+        }
+
+        /* 🫧 WATER BUBBLE SPHERE - TOP RIGHT */
+        .water-bubble {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, rgba(173, 216, 230, 0.9), rgba(135, 206, 235, 0.7), rgba(70, 130, 180, 0.8));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 32px rgba(135, 206, 235, 0.3),
+                inset 0 2px 10px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+            animation: bubbleFloat 3s ease-in-out infinite, bubbleShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes bubbleFloat {
+            0%, 100% { 
+                transform: translateY(0px) scale(1);
+            }
+            50% { 
+                transform: translateY(-10px) scale(1.05);
+            }
+        }
+
+        @keyframes bubbleShimmer {
+            0%, 100% { 
+                box-shadow: 
+                    0 8px 32px rgba(135, 206, 235, 0.3),
+                    inset 0 2px 10px rgba(255, 255, 255, 0.2),
+                    inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+            }
+            50% { 
+                box-shadow: 
+                    0 12px 40px rgba(135, 206, 235, 0.5),
+                    inset 0 4px 15px rgba(255, 255, 255, 0.4),
+                    inset 0 -4px 15px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        .bubble-timer {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            animation: bubbleCountGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes bubbleCountGlow {
+            0%, 100% { color: white; }
+            50% { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+        }
+
+        /* STATIC ACTION BUTTONS - TOP RIGHT */
+        /* .static-buttons {
+            position: fixed;
+            top: 20px;
+            right: 120px; 
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        } */
+
+        .static-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-width: 120px;
+        }
+
+        .static-btn-home {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .static-btn-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .static-btn-session {
+            background: rgba(74, 222, 128, 0.2);
+            color: white;
+        }
+
+        .static-btn-session:hover {
+            background: rgba(74, 222, 128, 0.3);
+            transform: translateY(-2px);
         }
 
         .container {
@@ -407,7 +513,7 @@
             color: #4ade80;
         }
 
-        /* Action Buttons */
+        /* Action Buttons - NORMAL BUTTONS REMAIN */
         .action-container {
             display: flex;
             gap: 15px;
@@ -481,17 +587,31 @@
                 font-size: 36px;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .stat-divider {
-                display: none;
-            }
-
             .action-container {
                 flex-direction: column;
+            }
+
+            /* Mobile adjustments for static elements */
+            .water-bubble {
+                width: 60px;
+                height: 60px;
+                top: 15px;
+                right: 15px;
+            }
+
+            .bubble-timer {
+                font-size: 16px;
+            }
+
+            /* .static-buttons {
+                top: 15px;
+                right: 85px;
+            } */
+
+            .static-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-width: 100px;
             }
         }
 
@@ -507,10 +627,48 @@
             .time-value {
                 font-size: 32px;
             }
+
+            /* .static-buttons {
+                top: 10px;
+                right: 75px;
+            } */
+
+            .static-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+                min-width: 90px;
+            }
+
+            .water-bubble {
+                width: 50px;
+                height: 50px;
+                top: 10px;
+                right: 10px;
+            }
+
+            .bubble-timer {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
+
+<!-- 🫧 WATER BUBBLE SPHERE WITH 30 SEC COUNTDOWN -->
+<div class="water-bubble">
+    <div class="bubble-timer" id="bubbleTimer">30</div>
+</div>
+
+<!-- STATIC ACTION BUTTONS -->
+<!-- <div class="static-buttons">
+    <button class="static-btn static-btn-home" onclick="goHome()">
+        🏠 Go Home
+    </button>
+    <button class="static-btn static-btn-session" onclick="unlockApps()">
+        ⏰ Session Running
+    </button>
+</div> -->
+
 <!-- Animated Background Particles -->
 <div class="particles" id="particles"></div>
 
@@ -588,7 +746,7 @@
         <div class="quote-author" id="quoteAuthor">— Bruce Lee</div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Original Action Buttons (Still Present) -->
     <div class="action-container">
         <button class="btn btn-home" onclick="goHome()">
             🏠 Go Home
@@ -636,11 +794,17 @@
         }
     ];
 
-    // Timer variables
-    let timeRemaining = 30 * 60; // 30 minutes in seconds
-    let totalTime = 30 * 60;
+    // Global variables
+    let currentApp = {};
+    let timeRemaining = 30 * 60; // Default 30 minutes in seconds
+    let totalTimeInSeconds = 30 * 60;
+    let lockTimeInMinutes = 30; // Default lock time
     let currentQuoteIndex = 0;
     let timerInterval;
+    
+    // 🫧 WATER BUBBLE 30 SEC COUNTDOWN
+    let bubbleTimeRemaining = 30; // 30 seconds
+    let bubbleTimerInterval;
 
     // Initialize particles
     function createParticles() {
@@ -657,6 +821,52 @@
         }
     }
 
+    // 🫧 BUBBLE TIMER UPDATE FUNCTION
+    function updateBubbleTimer() {
+        const bubbleTimer = document.getElementById('bubbleTimer');
+        bubbleTimer.textContent = bubbleTimeRemaining;
+
+        // Change color as time reduces
+        if (bubbleTimeRemaining > 20) {
+            bubbleTimer.style.color = 'white';
+        } else if (bubbleTimeRemaining > 10) {
+            bubbleTimer.style.color = '#f59e0b';
+        } else {
+            bubbleTimer.style.color = '#ef4444';
+        }
+
+        if (bubbleTimeRemaining > 0) {
+            bubbleTimeRemaining--;
+        } else {
+            // Reset to 30 when it reaches 0
+            bubbleTimeRemaining = 30;
+        }
+    }
+
+    // Calculate remaining time from lockUpToTime
+    function calculateRemainingTime(lockUpToTime) {
+        try {
+            console.log('🔄 Calculating remaining time from:', lockUpToTime);
+            
+            const lockUpDate = new Date(lockUpToTime);
+            const currentDate = new Date();
+            
+            console.log('🔄 Lock up date:', lockUpDate);
+            console.log('🔄 Current date:', currentDate);
+            
+            const timeDifference = lockUpDate.getTime() - currentDate.getTime();
+            const remainingMinutes = Math.max(0, Math.ceil(timeDifference / (1000 * 60)));
+            
+            console.log('🔄 Time difference (ms):', timeDifference);
+            console.log('🔄 Remaining minutes:', remainingMinutes);
+            
+            return remainingMinutes;
+        } catch (error) {
+            console.error('❌ Error calculating remaining time:', error);
+            return 30; // Default fallback
+        }
+    }
+
     // Update timer display
     function updateTimer() {
         const minutes = Math.floor(timeRemaining / 60);
@@ -670,20 +880,20 @@
         timeValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
         // Update progress bar
-        const progress = (totalTime - timeRemaining) / totalTime * 100;
+        const progress = (totalTimeInSeconds - timeRemaining) / totalTimeInSeconds * 100;
         progressBar.style.width = progress + '%';
 
-        // Update circular progress
-        const circumference = 2 * Math.PI * 70; // radius = 70
+        // Update circular progress (adjusted for mobile)
+        const circumference = 2 * Math.PI * 60; // radius = 60 for mobile
         const offset = circumference - (progress / 100) * circumference;
         progressCircle.style.strokeDashoffset = offset;
 
-        // Update used time
-        const usedMinutes = Math.floor((totalTime - timeRemaining) / 60);
+        // Update used time (lockTime - remainingTime)
+        const usedMinutes = Math.floor((totalTimeInSeconds - timeRemaining) / 60);
         usedTime.textContent = usedMinutes + 'min';
 
         // Change color based on remaining time
-        const progressPercent = timeRemaining / totalTime;
+        const progressPercent = timeRemaining / totalTimeInSeconds;
         if (progressPercent > 0.5) {
             timeValue.style.color = '#4ade80';
             progressCircle.style.stroke = '#4ade80';
@@ -723,54 +933,77 @@
         }, 300);
     }
 
-    // Button functions
+    // ✅ Go Home function
     function goHome() {
-        console.log('🏠 goHome called explicitly');
+        console.log('🏠 Go Home clicked');
 
-        if (window.Android && window.Android.goHome) {
-            window.Android.goHome();
+        if (typeof AndroidAccess !== 'undefined') {
+            AndroidAccess.onCancel();
         } else {
-            alert('Going to home screen... 🏠\nStay strong! Focus time is still active.');
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.close();
-            }
+            // Fallback
+            alert('Going to home screen... 🏠');
         }
     }
 
-    // Initialize lock screen with data from Android
-    function initLockScreen(appName, packageName, remainingTime) {
-        console.log('🚀 Initializing LockScreen:', appName, packageName, remainingTime);
-
+    // Initialize with single app from Android
+    function initializeWithSingleApp(appData) {
         try {
+            console.log('🔄 Initializing lock screen with app data:', appData);
+
+            if (typeof appData === 'string') {
+                appData = JSON.parse(appData);
+            }
+
+            // Calculate remaining time from lockUpToTime
+            const remainingMinutes = calculateRemainingTime(appData.lockUpToTime);
+            
+            // Get lock time from appData
+            lockTimeInMinutes = appData.lockTime || 30; // fallback to 30 minutes
+            
+            console.log('🔄 Lock time (minutes):', lockTimeInMinutes);
+            console.log('🔄 Remaining time (minutes):', remainingMinutes);
+
+            // Update current app data
+            currentApp = {
+                appName: appData.appName || 'Unknown App',
+                packageName: appData.packageName || '',
+                icon: appData.icon || '📱',
+                lockUpToTime: appData.lockUpToTime,
+                lockTime: lockTimeInMinutes,
+                remainingTime: remainingMinutes
+            };
+
             // Update app title
             const appTitle = document.querySelector('.app-title');
             if (appTitle) {
-                appTitle.textContent = appName + ' is Locked';
+                appTitle.textContent = currentApp.appName + ' is Locked';
             }
 
-            // Update time if provided
-            if (remainingTime && remainingTime > 0) {
-                timeRemaining = remainingTime * 60; // Convert to seconds
-                totalTime = remainingTime * 60;
+            // Set timer values
+            timeRemaining = remainingMinutes * 60; // Convert to seconds
+            totalTimeInSeconds = lockTimeInMinutes * 60; // Total lock time in seconds
 
-                // Update display elements
-                const totalTimeDisplay = document.getElementById('totalTimeDisplay');
-                const lockTimeDisplay = document.getElementById('lockTimeDisplay');
+            // Update display elements
+            const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+            const lockTimeDisplay = document.getElementById('lockTimeDisplay');
 
-                if (totalTimeDisplay) {
-                    totalTimeDisplay.textContent = remainingTime + 'min';
-                }
-                if (lockTimeDisplay) {
-                    lockTimeDisplay.textContent = remainingTime + ' minutes';
-                }
+            // totalTimeDisplay me lockTime ka value
+            if (totalTimeDisplay) {
+                totalTimeDisplay.textContent = lockTimeInMinutes + 'min';
             }
 
-            // Force update timer display
+            // lockTimeDisplay me bhi lockTime ka value
+            if (lockTimeDisplay) {
+                lockTimeDisplay.textContent = lockTimeInMinutes + ' minutes';
+            }
+
+            // Force update timer display immediately
             updateTimer();
 
             console.log('✅ Lock screen initialized successfully');
+            console.log('🔄 Total time:', lockTimeInMinutes, 'minutes');
+            console.log('🔄 Remaining time:', remainingMinutes, 'minutes');
+
         } catch (error) {
             console.error('❌ Error initializing lock screen:', error);
         }
@@ -778,6 +1011,7 @@
 
     function unlockApps() {
         clearInterval(timerInterval);
+        clearInterval(bubbleTimerInterval);
         alert('Well Done! 🎉\nYou\'ve successfully completed your focus time!');
 
         // Add celebration effect
@@ -865,8 +1099,11 @@
         createParticles();
         initQuoteTransitions();
 
-        // Start timer
+        // Start main timer
         timerInterval = setInterval(updateTimer, 1000);
+
+        // 🫧 START BUBBLE TIMER (30 sec countdown, loops)
+        bubbleTimerInterval = setInterval(updateBubbleTimer, 1000);
 
         // Change quote every 30 seconds
         setInterval(changeQuote, 30000);
@@ -885,9 +1122,9 @@
         console.log('✅ All initialized successfully');
     });
 
-    // Make initLockScreen globally available immediately
-    window.initLockScreen = initLockScreen;
-    console.log('🌐 initLockScreen function registered globally');
+    // Make functions globally available
+    window.initializeWithSingleApp = initializeWithSingleApp;
+    window.initializeWithApps = initializeWithSingleApp; // Fallback
 
     // Random quote on load
     setTimeout(() => {

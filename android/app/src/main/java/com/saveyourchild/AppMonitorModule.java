@@ -53,7 +53,6 @@ public class AppMonitorModule extends ReactContextBaseJavaModule {
     }
 
     // android/app/src/main/java/com/saveyourchild/AppMonitorModule.java
-
     @ReactMethod
     public static void updateActiveSessionForApp(String packageName, String sessionDataJson) {
         try {

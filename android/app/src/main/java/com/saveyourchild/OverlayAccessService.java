@@ -40,6 +40,8 @@ public class OverlayAccessService extends Service {
     private String currentPackageName;
     private String currentAppIcon;
     private JSONObject jsonAppData;
+    private String appState;
+
 
     @Override
     public void onCreate() {
@@ -61,6 +63,8 @@ public class OverlayAccessService extends Service {
         }
 
         String jsonString = intent.getStringExtra("appData");
+        appState = intent.getStringExtra("appState");
+        
         if (jsonString == null) {
             Log.e(TAG, "No appData provided");
             stopSelf();
@@ -136,8 +140,13 @@ public class OverlayAccessService extends Service {
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         windowManager.addView(overlayWebView, params);
-        overlayWebView.loadUrl("file:///android_asset/accessScreen.html");
-
+        if("showAccessScreen".equalsIgnoreCase(appState)) {
+            overlayWebView.loadUrl("file:///android_asset/accessScreen.html");
+        } else if ("showLockScreen".equalsIgnoreCase(appState)) {
+            overlayWebView.loadUrl("file:///android_asset/lockscreen.html");
+        }else {
+            Log.d(TAG, "No valid appState: " + appState);
+        }
         Log.d(TAG, "Overlay displayed for: " + currentAppName);
 
         // ✅ Add timeout to prevent stuck overlays

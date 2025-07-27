@@ -484,6 +484,7 @@
     </style>
 </head>
 <body>
+
 <!-- Animated Background Particles -->
 <div class="particles" id="particles"></div>
 
@@ -596,13 +597,6 @@
         </button>
     </div>
 
-    <!-- Add this button for debugging (remove in production) -->
-    <div style="position: fixed; top: 10px; right: 10px; z-index: 9999;">
-        <button onclick="debugAndroidAccess()" style="background: #ff4444; color: white; border: none; padding: 10px; border-radius: 5px;">
-            🔍 Debug
-        </button>
-    </div>
-
 </div>
 
 <script>
@@ -616,64 +610,6 @@
     // Time values in minutes
     let selectedAccessTime = 15; // default 15 minutes
     let selectedLockTime = 60; // default 1 hour
-
-
-    // ✅ Debug function to test AndroidAccess
-    function debugAndroidAccess() {
-        console.log('🔍 === DEBUG SESSION START ===');
-        
-        // Check AndroidAccess
-        console.log('AndroidAccess available:', typeof AndroidAccess !== 'undefined');
-        
-        if (typeof AndroidAccess !== 'undefined') {
-            console.log('AndroidAccess object:', AndroidAccess);
-            console.log('Available methods:', Object.getOwnPropertyNames(AndroidAccess));
-            
-            // Test each method
-            try {
-                if (AndroidAccess.logMessage) {
-                    AndroidAccess.logMessage('Test message from WebView');
-                    console.log('✅ logMessage works');
-                }
-                
-                if (AndroidAccess.getAppName) {
-                    const appName = AndroidAccess.getAppName();
-                    console.log('✅ getAppName:', appName);
-                }
-                
-                if (AndroidAccess.getPackageName) {
-                    const packageName = AndroidAccess.getPackageName();
-                    console.log('✅ getPackageName:', packageName);
-                }
-                
-            } catch (error) {
-                console.error('❌ Error testing AndroidAccess methods:', error);
-            }
-        }
-        
-        // Test session data creation
-        const testSessionData = {
-            packageName: currentApp.packageName || 'test.package',
-            appName: currentApp.appName || 'Test App',
-            icon: currentApp.icon || '📱',
-            accessTime: selectedAccessTime,
-            lockTime: selectedLockTime,
-            accessStartTime: new Date().toISOString(),
-            accessEndTime: new Date(Date.now() + 15*60*1000).toISOString(),
-            lockUpToTime: new Date(Date.now() + 75*60*1000).toISOString(),
-            noreels: false,
-            wallpaper: '',
-            isActive: true
-        };
-        
-        console.log('📊 Test session data:', testSessionData);
-        console.log('📊 JSON string:', JSON.stringify(testSessionData));
-        
-        console.log('🔍 === DEBUG SESSION END ===');
-    }
-
-
-
 
     // Initialize particles
     function createParticles() {

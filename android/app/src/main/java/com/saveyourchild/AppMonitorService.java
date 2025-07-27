@@ -22,6 +22,7 @@ public class AppMonitorService extends AccessibilityService {
     private static long lastBlockTime = 0;
     private static String lastBlockedPackage = "";
     JSONObject appData;
+    private String appName;
 
     // App states for decision making
     private enum AppState {
@@ -85,7 +86,7 @@ public class AppMonitorService extends AccessibilityService {
             }
 
             appData = activeSession.getJSONObject(packageName);
-
+            appName = appData.optString("appName", "");
             // Check if app is active
             if (!appData.optBoolean("isActive", false)) {
                 Log.d(TAG, "📋 App is not active in session: " + packageName);
@@ -128,6 +129,23 @@ public class AppMonitorService extends AccessibilityService {
                     return AppState.IN_LOCK_PERIOD;
                 } else if (currentTime > lockUpToMillis) {
                     Log.d(TAG, "🔓 Lock expired: " + packageName);
+                    // 1) Reset the timing fields on the JSON
+                    try {
+                        // clear the old times
+                        appData.put("accessTime", 0);
+                        appData.put("lockTime", 0);
+                        appData.put("accessStartTime", "");
+                        appData.put("accessEndTime", "");
+                        appData.put("lockUpToTime",  "");
+                    } catch (JSONException je) {
+                        Log.e(TAG, "❌ Error clearing appData times", je);
+                    }
+                    // 2) Write that back into your session store
+                    //    Make sure to convert to String—your bridge method takes a String
+                    AppMonitorModule.updateActiveSessionForApp(
+                            packageName,
+                            appData.toString()
+                    );
                     return AppState.LOCK_EXPIRED;
                 } else {
                     Log.d(TAG, "⏰ Before access time: " + packageName);
@@ -157,9 +175,9 @@ public class AppMonitorService extends AccessibilityService {
 //                return;
 //            }
 
+            Log.d(TAG, "🎯 isOverlayActive: " + isOverlayActive +" lastBlockedPackage: "+lastBlockedPackage+" currentTime: "+currentTime+" lastBlockTime: "+lastBlockTime);
             lastBlockTime = currentTime;
             lastBlockedPackage = packageName;
-            String appName = getAppNameFromPackage(packageName);
 
             isOverlayActive = true;
 
@@ -168,19 +186,16 @@ public class AppMonitorService extends AccessibilityService {
                  Log.d(TAG, "🎯 Showing Access Screen for: " + appName);
                 Intent accessIntent = new Intent(this, OverlayAccessService.class);
                 accessIntent.putExtra("appData", appData.toString());
+                accessIntent.putExtra("appState", "showAccessScreen");
                 startService(accessIntent);
                 break;
 
                 case IN_LOCK_PERIOD:
                     Log.d(TAG, "🔒 Showing Lock Screen for: " + appName);
 
-                    // Get remaining lock time
-                    int remainingTime = getRemainingLockTime(packageName);
-
-                    Intent lockIntent = new Intent(this, ReactNativeOverlayService.class);
-                    lockIntent.putExtra("appName", appName);
-                    lockIntent.putExtra("packageName", packageName);
-                    lockIntent.putExtra("remainingTime", remainingTime);
+                    Intent lockIntent = new Intent(this, OverlayAccessService.class);
+                    lockIntent.putExtra("appData", appData.toString());
+                    lockIntent.putExtra("appState", "showLockScreen");
                     startService(lockIntent);
                     break;
 
@@ -195,36 +210,6 @@ public class AppMonitorService extends AccessibilityService {
         } catch (Exception e) {
             isOverlayActive = false;
             Log.e(TAG, "❌ Error handling app intervention: " + e.getMessage());
-        }
-    }
-
-    // ✅ Get remaining lock time in seconds
-    private int getRemainingLockTime(String packageName) {
-        try {
-            String rulesJson = AppMonitorModule.getActiveSession();
-            if (rulesJson == null || rulesJson.isEmpty()) return 30; // Default fallback
-
-            JSONObject activeSession = new JSONObject(rulesJson);
-            if (!activeSession.has(packageName)) return 30;
-
-            JSONObject appData = activeSession.getJSONObject(packageName);
-            String lockUpToTime = appData.optString("lockUpToTime", "");
-
-            if (lockUpToTime.isEmpty()) return 30;
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-            long lockUpToMillis = sdf.parse(lockUpToTime).getTime();
-            long currentTime = System.currentTimeMillis();
-            long remainingMillis = lockUpToMillis - currentTime;
-
-            int remainingSeconds = (int) (remainingMillis / 1000);
-            return Math.max(remainingSeconds, 0);
-
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error calculating remaining lock time: " + e.getMessage());
-            return 30; // Default fallback
         }
     }
 
@@ -253,17 +238,6 @@ public class AppMonitorService extends AccessibilityService {
     public static void resetOverlayFlag() {
         isOverlayActive = false;
         Log.d(TAG, "🔄 Overlay flag reset");
-    }
-
-    private String getAppNameFromPackage(String packageName) {
-        try {
-            PackageManager pm = getPackageManager();
-            android.content.pm.ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-            return pm.getApplicationLabel(appInfo).toString();
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error getting app name for: " + packageName);
-            return packageName;
-        }
     }
 
     private void notifyReactNative(String packageName, String appName) {

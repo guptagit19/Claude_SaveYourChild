@@ -51,11 +51,6 @@ const AppCard = ({
         {/* App Icon */}
         <View style={styles.iconContainer}>
           {renderIcon()}
-          {/* {isSelected && (
-            <View style={styles.checkmark}>
-              <Text style={styles.checkmarkText}>✓</Text>
-            </View>
-          )} */}
         </View>
 
         {/* App Info */}
@@ -63,9 +58,9 @@ const AppCard = ({
           <Text style={styles.appName} numberOfLines={1}>
             {appName}
           </Text>
-          <Text style={styles.packageName} numberOfLines={1}>
+          {/* <Text style={styles.packageName} numberOfLines={1}>
             {packageName}
-          </Text>
+          </Text> */}
         </View>
 
         {/* Selection Indicator */}
@@ -73,7 +68,6 @@ const AppCard = ({
           styles.selectionIndicator,
           isSelected && styles.selectedIndicator
         ]}>
-          {/* {isSelected && <View style={styles.selectedDot} />} */}
           {isSelected && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>

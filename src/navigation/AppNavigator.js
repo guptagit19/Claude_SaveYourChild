@@ -15,6 +15,7 @@ const AppNavigator = () => {
     // ❌ Remove this NavigationContainer - it's already in App.js
     <Stack.Navigator
       initialRouteName="AppSelection"
+      
       screenOptions={{
         headerStyle: {
           backgroundColor: '#4A90E2',
@@ -24,39 +25,44 @@ const AppNavigator = () => {
           fontWeight: 'bold',
         },
       }}
+
     >
       <Stack.Screen
         name="AppSelection"
         component={AppSelectionScreen}
-        options={{ title: 'SaveYourChild From Mobile Addict' }}
+         options={{
+          headerShown: true,
+          gestureEnabled: false, // Disable swipe back
+          animation: 'slide_from_bottom',
+        }}
       />
 
       <Stack.Screen
         name="PermissionSetup"
         component={PermissionSetupScreen}
-        options={{ title: 'Setup Permissions' }}
+        //options={{ title: 'Setup Permissions' }}
       />
 
       <Stack.Screen
         name="TimePicker"
         component={TimePickerScreen}
-        options={{ title: 'Set Time Limits' }}
+        //options={{ title: 'Set Time Limits' }}
       />
       
       <Stack.Screen
         name="ActiveSession"
         component={ActiveSessionScreen}
-        options={{ title: 'Active Session' }}
+        //options={{ title: 'Active Session' }}
       />
       
       <Stack.Screen
         name="LockScreen"
         component={LockScreen}
-        options={{
-          headerShown: false,
-          gestureEnabled: false, // Disable swipe back
-          animation: 'slide_from_bottom',
-        }}
+        // options={{
+        //   headerShown: false,
+        //   gestureEnabled: false, // Disable swipe back
+        //   animation: 'slide_from_bottom',
+        // }}
       />
     </Stack.Navigator>
   );

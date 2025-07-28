@@ -2,33 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Set Time Limits - Focus App</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            overflow-y: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+            background-attachment: fixed;
             animation: gradientShift 8s ease-in-out infinite;
             min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            touch-action: pan-y;
         }
 
         @keyframes gradientShift {
-            0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
-            50% { background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%); }
+            0%, 100% {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+            }
+            50% {
+                background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%) !important;
+            }
+        }
+
+        /* Water Bubble Sphere - Top Right */
+        .water-bubble {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle at 30% 30%, rgba(173, 216, 230, 0.9), rgba(135, 206, 235, 0.7), rgba(70, 130, 180, 0.8));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 8px 32px rgba(135, 206, 235, 0.3),
+                inset 0 2px 10px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+            animation: bubbleFloat 3s ease-in-out infinite, bubbleShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes bubbleFloat {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+            }
+            50% {
+                transform: translateY(-8px) scale(1.05);
+            }
+        }
+
+        @keyframes bubbleShimmer {
+            0%, 100% {
+                box-shadow:
+                    0 8px 32px rgba(135, 206, 235, 0.3),
+                    inset 0 2px 10px rgba(255, 255, 255, 0.2),
+                    inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow:
+                    0 12px 40px rgba(135, 206, 235, 0.5),
+                    inset 0 4px 15px rgba(255, 255, 255, 0.4),
+                    inset 0 -4px 15px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        .bubble-timer {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            animation: bubbleCountGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes bubbleCountGlow {
+            0%, 100% { color: white; }
+            50% { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
         }
 
         .container {
-            min-height: 100vh;
-            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 15px;
             color: white;
             position: relative;
+            -webkit-overflow-scrolling: touch;
+            background: transparent;
         }
 
         /* Animated Background Particles */
@@ -57,122 +145,119 @@
             100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
         }
 
-        /* Header Section */
+        /* Enhanced Header Section */
         .header {
             text-align: center;
-            margin: 40px 0;
+            margin: 30px 0 25px 0;
             z-index: 10;
             position: relative;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease-out;
         }
 
-        /* Hexagonal Lock Icon Container */
-        .hexagon-container {
+        .diamond-container {
             position: relative;
-            margin: 0 auto 30px;
-            width: 140px;
-            height: 140px;
-        }
-
-        .hexagon {
-            width: 140px;
+            margin: 0 auto 20px;
+            width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .diamond {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
             position: relative;
-            margin: 10px 0;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin: 15px auto;
+            transform: rotate(45deg);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: hexagonPulse 3s ease-in-out infinite;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: diamondSpin 4s ease-in-out infinite;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 2px 8px rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
         }
 
-        .hexagon:before,
-        .hexagon:after {
-            content: "";
-            position: absolute;
-            width: 0;
-            border-left: 70px solid transparent;
-            border-right: 70px solid transparent;
-            left: 0;
-        }
-
-        .hexagon:before {
-            bottom: 100%;
-            border-bottom: 35px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .hexagon:after {
-            top: 100%;
-            border-top: 35px solid rgba(255, 255, 255, 0.2);
-        }
-
-        @keyframes hexagonPulse {
+        @keyframes diamondSpin {
             0%, 100% {
-                transform: scale(1) rotate(0deg);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                transform: rotate(45deg) scale(1);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             }
             50% {
-                transform: scale(1.1) rotate(5deg);
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+                transform: rotate(45deg) scale(1.08);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
             }
         }
 
         .lock-icon {
-            width: 60px;
-            height: 60px;
+            width: 65px;
+            height: 65px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: lockBreathe 2s ease-in-out infinite;
+            animation: lockFloat 2.5s ease-in-out infinite;
             text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             z-index: 5;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            transform: rotate(-45deg);
+            font-size: 45px;
         }
 
-        @keyframes lockBreathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+        @keyframes lockFloat {
+            0%, 100% { transform: rotate(-45deg) translateY(0px); }
+            50% { transform: rotate(-45deg) translateY(-4px); }
         }
 
         .app-title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             animation: fadeInUp 1s ease-out;
+            background: linear-gradient(135deg, #ffffff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
-            font-size: 18px;
-            opacity: 0.9;
+            font-size: 16px;
+            opacity: 0.85;
             animation: fadeInUp 1s ease-out 0.2s both;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         /* Time Selection Sections */
         .time-section {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(15px);
-            border-radius: 25px;
-            padding: 25px;
-            margin: 25px 0;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.18);
             animation: slideInUp 0.8s ease-out 0.6s both;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
         }
 
         @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(50px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -181,40 +266,114 @@
         }
 
         .section-title {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            text-align: center;
+            gap: 8px;
         }
 
         .section-description {
-            font-size: 14px;
+            font-size: 16px;
             opacity: 0.8;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        /* Block Reels Card - Updated with matching colors */
+        .block-reels-card {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.85), rgba(160, 82, 45, 0.75));
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(139, 69, 19, 0.3);
+            animation: slideInUp 0.8s ease-out 0.9s both;
+            box-shadow: 0 6px 25px rgba(139, 69, 19, 0.2);
+            text-align: center;
+        }
+
+        .block-reels-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .block-reels-description {
+            font-size: 13px;
             line-height: 1.5;
+            opacity: 0.9;
+            margin-bottom: 18px;
+            color: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 55px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4ade80;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(25px);
         }
 
         /* Seek Bar Styles */
         .seek-bar-container {
-            margin: 25px 0;
+            margin: 20px 0;
         }
 
         .seek-bar-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .current-value {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #4ade80;
             background: rgba(74, 222, 128, 0.2);
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 15px;
             border: 1px solid rgba(74, 222, 128, 0.3);
         }
 
@@ -222,10 +381,11 @@
             position: relative;
             height: 8px;
             background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            margin: 20px 0;
+            border-radius: 3px;
+            margin: 15px 0;
             cursor: pointer;
             overflow: hidden;
+            touch-action: none;
         }
 
         .seek-bar::before {
@@ -235,111 +395,116 @@
             left: 0;
             height: 100%;
             background: linear-gradient(90deg, #4ade80, #22c55e);
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.3s ease;
             animation: seekGlow 2s ease-in-out infinite;
         }
 
         @keyframes seekGlow {
-            0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
+            0%, 100% { box-shadow: 0 0 8px rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.6); }
         }
 
         .seek-thumb {
             position: absolute;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             background: linear-gradient(135deg, #4ade80, #22c55e);
             border-radius: 50%;
-            border: 3px solid white;
+            border: 2px solid white;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+            box-shadow: 0 3px 12px rgba(74, 222, 128, 0.4);
+            touch-action: none;
         }
 
-        .seek-thumb:hover {
-            transform: translate(-50%, -50%) scale(1.2);
-            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.6);
+        .seek-thumb:active {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.6);
         }
 
         .seek-labels {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
-            font-size: 12px;
+            margin-top: 8px;
+            font-size: 11px;
             opacity: 0.7;
         }
 
         /* Quick Select Options */
         .quick-select {
-            margin-top: 25px;
+            margin-top: 20px;
         }
 
         .quick-select-title {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             opacity: 0.9;
+            text-align: center;
         }
 
         .quick-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 19px;
+            justify-content: center;
         }
 
         .quick-option {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            font-size: 14px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            touch-action: manipulation;
         }
 
-        .quick-option:hover, .quick-option.active {
+        .quick-option:active, .quick-option.active {
             background: linear-gradient(135deg, #4ade80, #22c55e);
             border-color: #4ade80;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(74, 222, 128, 0.3);
         }
 
         /* Summary Card */
         .summary-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 25px;
-            padding: 25px;
-            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.8));
+            border-radius: 20px;
+            padding: 20px;
+            margin: 25px 0;
             border: 1px solid rgba(255, 255, 255, 0.2);
             animation: slideInUp 0.8s ease-out 1s both;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
         }
 
         .summary-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .summary-row {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
-            gap: 12px;
+            margin-bottom: 10px;
+            gap: 10px;
         }
 
         .summary-icon {
-            font-size: 20px;
-            width: 24px;
+            font-size: 18px;
+            width: 20px;
         }
 
         .summary-text {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
         }
 
@@ -349,50 +514,47 @@
             bottom: 0;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
-            padding: 20px;
-            margin: 20px -20px 0px -20px;
+            padding: 8px 8px 12px 8px;
+            margin: 15px -15px -15px -15px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .start-button {
             width: 100%;
-            padding: 18px;
+            padding: 16px;
             background: linear-gradient(135deg, #4ade80, #22c55e);
             border: none;
-            border-radius: 25px;
-            font-size: 20px;
+            border-radius: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4);
+            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
             animation: buttonPulse 3s ease-in-out infinite;
+            touch-action: manipulation;
         }
 
         @keyframes buttonPulse {
-            0%, 100% { box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4); }
-            50% { box-shadow: 0 12px 35px rgba(74, 222, 128, 0.6); }
-        }
-
-        .start-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(74, 222, 128, 0.6);
+            0%, 100% { box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4); }
+            50% { box-shadow: 0 8px 30px rgba(74, 222, 128, 0.6); }
         }
 
         .start-button:active {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(74, 222, 128, 0.6);
         }
 
         /* Action Buttons */
         .action-container {
             display: flex;
-            gap: 15px;
-            margin: 0px -20px -20px -20px;
-            padding: 20px;
+            gap: 12px;
+            margin: 0px -15px -15px -15px;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -401,17 +563,18 @@
 
         .btn {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             border: none;
-            border-radius: 25px;
-            font-size: 16px;
+            border-radius: 20px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.3s ease;
+            touch-action: manipulation;
         }
 
         .btn-home {
@@ -420,10 +583,10 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .btn-home:hover {
+        .btn-home:active {
             background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary {
@@ -431,68 +594,40 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:active {
             background: linear-gradient(135deg, #d97706, #b45309);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+        /* Ripple Effect */
+        @keyframes rippleEffect {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
             }
-
-            .hexagon-container {
-                width: 120px;
-                height: 120px;
-            }
-
-            .hexagon {
-                width: 120px;
-                height: 100px;
-            }
-
-            .lock-icon {
-                width: 50px;
-                height: 50px;
-            }
-
-            .app-title {
-                font-size: 24px;
-            }
-
-            .quick-options {
-                justify-content: center;
-            }
-
-            .action-container {
-                flex-direction: column;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .time-section, .summary-card {
-                padding: 20px;
-            }
-
-            .start-button {
-                font-size: 18px;
-                padding: 16px;
+            100% {
+                transform: translate(-50%, -50%) scale(4);
+                opacity: 0;
             }
         }
     </style>
 </head>
 <body>
 
+<!-- Water Bubble Sphere with 30 Sec Countdown -->
+<div class="water-bubble">
+    <div class="bubble-timer" id="bubbleTimer">30</div>
+</div>
+
 <!-- Animated Background Particles -->
 <div class="particles" id="particles"></div>
 
 <div class="container">
-    <!-- Header Section -->
+    <!-- Enhanced Header Section -->
     <div class="header">
-        <div class="hexagon-container">
-            <div class="hexagon">
+        <div class="diamond-container">
+            <div class="diamond">
                 <div class="lock-icon" id="app-icon">📱</div>
             </div>
         </div>
@@ -562,6 +697,18 @@
         </div>
     </div>
 
+    <!-- Block Reels & Short Videos Card -->
+    <div class="block-reels-card">
+        <h3 class="block-reels-title">🚫 Block Reels & Short Videos</h3>
+        <p class="block-reels-description">
+            Prevent access to addictive short-form content like Instagram Reels, YouTube Shorts, and TikTok videos.
+        </p>
+        <label class="toggle-switch">
+            <input type="checkbox" id="blockReelsToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <!-- Summary Card -->
     <div class="summary-card">
         <h3 class="summary-title">📋 Session Summary</h3>
@@ -574,6 +721,10 @@
             <span class="summary-text">Lock Duration: <span id="summary-lock">1 hour</span></span>
         </div>
         <div class="summary-row">
+            <span class="summary-icon">🚫</span>
+            <span class="summary-text">Block Reels: <span id="summary-reels">Disabled</span></span>
+        </div>
+        <div class="summary-row">
             <span class="summary-icon">📱</span>
             <span class="summary-text">App: <span id="summary-app">Loading...</span></span>
         </div>
@@ -582,18 +733,15 @@
     <!-- Start Session Button -->
     <div class="button-container">
         <button class="start-button" onclick="handleStartSession()">
-            <span style="font-size: 28px;">▶️</span>
+            <span style="font-size: 24px;">▶️</span>
             <span>Start Focus Session</span>
         </button>
     </div>
 
     <!-- Action Buttons -->
     <div class="action-container">
-        <button class="btn btn-home" onclick="goHome()">
+        <button class="btn btn-primary" onclick="goHome()">
             🏠 Go Home
-        </button>
-        <button class="btn btn-primary" onclick="handleCancel()">
-            ❌ Cancel
         </button>
     </div>
 
@@ -610,15 +758,20 @@
     // Time values in minutes
     let selectedAccessTime = 15; // default 15 minutes
     let selectedLockTime = 60; // default 1 hour
+    let blockReelsEnabled = false; // default disabled
+
+    // Water Bubble 30 Sec Countdown
+    let bubbleTimeRemaining = 30; // 30 seconds
+    let bubbleTimerInterval;
 
     // Initialize particles
     function createParticles() {
         const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 12; i++) {
             const particle = document.createElement('div');
             particle.className = 'particle';
             particle.style.left = Math.random() * 100 + '%';
-            particle.style.width = Math.random() * 6 + 4 + 'px';
+            particle.style.width = Math.random() * 5 + 3 + 'px';
             particle.style.height = particle.style.width;
             particle.style.animationDelay = Math.random() * 6 + 's';
             particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
@@ -626,7 +779,29 @@
         }
     }
 
-    // ✅ Initialize with single app from Android
+    // Bubble Timer Update Function
+    function updateBubbleTimer() {
+        const bubbleTimer = document.getElementById('bubbleTimer');
+        bubbleTimer.textContent = bubbleTimeRemaining;
+
+        // Change color as time reduces
+        if (bubbleTimeRemaining > 20) {
+            bubbleTimer.style.color = 'white';
+        } else if (bubbleTimeRemaining > 10) {
+            bubbleTimer.style.color = '#f59e0b';
+        } else {
+            bubbleTimer.style.color = '#ef4444';
+        }
+
+        if (bubbleTimeRemaining > 0) {
+            bubbleTimeRemaining--;
+        } else {
+            // Reset to 30 when it reaches 0
+            bubbleTimeRemaining = 30;
+        }
+    }
+
+    // Initialize with single app from Android
     function initializeWithSingleApp(appData) {
         try {
             console.log('🔄 Initializing access screen with app data:', appData);
@@ -660,7 +835,7 @@
                     // It's an emoji or text
                     appIcon.textContent = currentApp.icon;
                     appIcon.style.backgroundImage = 'none';
-                    appIcon.style.fontSize = '60px';
+                    appIcon.style.fontSize = '45px';
                 }
             }
 
@@ -724,10 +899,13 @@
 
         // Access seek bar interaction
         let isDraggingAccess = false;
-        accessBar.addEventListener('mousedown', startAccessDrag);
-        accessBar.addEventListener('touchstart', startAccessDrag);
 
-        function startAccessDrag(e) {
+        // Touch events for mobile
+        accessBar.addEventListener('touchstart', handleAccessStart, { passive: false });
+        accessBar.addEventListener('mousedown', handleAccessStart);
+
+        function handleAccessStart(e) {
+            e.preventDefault();
             isDraggingAccess = true;
             updateAccessFromEvent(e);
         }
@@ -745,10 +923,12 @@
 
         // Lock seek bar interaction
         let isDraggingLock = false;
-        lockBar.addEventListener('mousedown', startLockDrag);
-        lockBar.addEventListener('touchstart', startLockDrag);
 
-        function startLockDrag(e) {
+        lockBar.addEventListener('touchstart', handleLockStart, { passive: false });
+        lockBar.addEventListener('mousedown', handleLockStart);
+
+        function handleLockStart(e) {
+            e.preventDefault();
             isDraggingLock = true;
             updateLockFromEvent(e);
         }
@@ -764,23 +944,29 @@
             updateQuickSelectActive('lock', selectedLockTime);
         }
 
-        // Global mouse/touch events
+        // Global touch/mouse events
+        document.addEventListener('touchmove', (e) => {
+            if (isDraggingAccess) {
+                e.preventDefault();
+                updateAccessFromEvent(e);
+            }
+            if (isDraggingLock) {
+                e.preventDefault();
+                updateLockFromEvent(e);
+            }
+        }, { passive: false });
+
         document.addEventListener('mousemove', (e) => {
             if (isDraggingAccess) updateAccessFromEvent(e);
             if (isDraggingLock) updateLockFromEvent(e);
         });
 
-        document.addEventListener('touchmove', (e) => {
-            if (isDraggingAccess) updateAccessFromEvent(e);
-            if (isDraggingLock) updateLockFromEvent(e);
-        });
-
-        document.addEventListener('mouseup', () => {
+        document.addEventListener('touchend', () => {
             isDraggingAccess = false;
             isDraggingLock = false;
         });
 
-        document.addEventListener('touchend', () => {
+        document.addEventListener('mouseup', () => {
             isDraggingAccess = false;
             isDraggingLock = false;
         });
@@ -819,17 +1005,28 @@
         }
     }
 
-    // ✅ Enhanced handleStartSession with debugging
+    // Block Reels Toggle functionality
+    function initBlockReelsToggle() {
+        const toggle = document.getElementById('blockReelsToggle');
+        const summaryReels = document.getElementById('summary-reels');
+
+        toggle.addEventListener('change', function() {
+            blockReelsEnabled = this.checked;
+            summaryReels.textContent = blockReelsEnabled ? 'Enabled' : 'Disabled';
+        });
+    }
+
+    // Enhanced handleStartSession with Block Reels support
     function handleStartSession() {
         console.log('🚀 handleStartSession called');
-        
-        // ✅ Debug: Check AndroidAccess availability
+
+        // Debug: Check AndroidAccess availability
         console.log('🔍 AndroidAccess available?', typeof AndroidAccess !== 'undefined');
         if (typeof AndroidAccess !== 'undefined') {
             console.log('✅ AndroidAccess methods:', Object.getOwnPropertyNames(AndroidAccess));
         }
 
-        // ✅ Debug: Check current app data
+        // Debug: Check current app data
         console.log('📱 Current app data:', currentApp);
 
         if (!selectedAccessTime || !selectedLockTime) {
@@ -853,75 +1050,62 @@
         const sessionData = {
             packageName: currentApp.packageName,
             appName: currentApp.appName,
-            //icon: currentApp.icon,
             accessTime: selectedAccessTime,
             lockTime: selectedLockTime,
             accessStartTime: accessStartTime.toISOString(),
             accessEndTime: accessEndTime.toISOString(),
             lockUpToTime: lockUpToTime.toISOString(),
-            noreels: false,
+            noreels: blockReelsEnabled, // Include Block Reels setting
             wallpaper: '',
             isActive: true
         };
 
-        // ✅ Debug: Log session data
+        // Debug: Log session data
         console.log('📊 Session data created:', sessionData);
         console.log('📊 Session data JSON:', JSON.stringify(sessionData, null, 2));
 
-        // Show confirmation
-        const confirmMessage = `🎯 Ready to start focus session for ${currentApp.appName}?
+        console.log('✅ User confirmed session start');
 
-    ⏱️ Access Time: ${formatTime(selectedAccessTime)}
-    🔒 Lock Duration: ${formatTime(selectedLockTime)}
+        // Add success animation
+        document.body.style.background = 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a) !important';
+        document.body.style.backgroundAttachment = 'fixed';
 
-    Click OK to begin your focus journey! 🚀`;
+        // Show success message
+        alert('🎉 Focus Session Started!\n\nStay focused and achieve your goals! 💪');
 
-        //if (confirm(confirmMessage)) {
-            console.log('✅ User confirmed session start');
-            
-            // Add success animation
-            document.body.style.background = 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)';
+        // Enhanced Android communication with error handling
+        try {
+            if (typeof AndroidAccess !== 'undefined' && AndroidAccess.onFocusSessionStart) {
+                console.log('📤 Calling AndroidAccess.onFocusSessionStart...');
 
-            // Show success message
-            alert('🎉 Focus Session Started!\n\nStay focused and achieve your goals! 💪');
+                const jsonString = JSON.stringify(sessionData);
+                console.log('📤 Sending JSON:', jsonString);
 
-            // ✅ Enhanced Android communication with error handling
-            try {
-                if (typeof AndroidAccess !== 'undefined' && AndroidAccess.onFocusSessionStart) {
-                    console.log('📤 Calling AndroidAccess.onFocusSessionStart...');
-                    
-                    const jsonString = JSON.stringify(sessionData);
-                    console.log('📤 Sending JSON:', jsonString);
-                    
-                    AndroidAccess.onFocusSessionStart(jsonString);
-                    console.log('✅ AndroidAccess.onFocusSessionStart called successfully');
-                    
-                    // ✅ Log success to Android
-                    if (AndroidAccess.logMessage) {
-                        AndroidAccess.logMessage('Session data sent successfully: ' + currentApp.appName);
-                    }
-                    
-                } else {
-                    console.warn('⚠️ AndroidAccess not available, using fallback');
-                    console.log('📊 Session Data (Fallback):', sessionData);
-                    
-                    // Enhanced fallback for testing
-                    setTimeout(() => {
-                        console.log('🔄 Fallback: Reloading page...');
-                        window.location.reload();
-                    }, 2000);
+                AndroidAccess.onFocusSessionStart(jsonString);
+                console.log('✅ AndroidAccess.onFocusSessionStart called successfully');
+
+                // Log success to Android
+                if (AndroidAccess.logMessage) {
+                    AndroidAccess.logMessage('Session data sent successfully: ' + currentApp.appName);
                 }
-            } catch (error) {
-                console.error('❌ Error calling AndroidAccess:', error);
-                alert('❌ Error: Failed to start session. Please try again.');
+
+            } else {
+                console.warn('⚠️ AndroidAccess not available, using fallback');
+                console.log('📊 Session Data (Fallback):', sessionData);
+
+                // Enhanced fallback for testing
+                setTimeout(() => {
+                    console.log('🔄 Fallback: Reloading page...');
+                    window.location.reload();
+                }, 2000);
             }
-       // } else {
-        //    console.log('❌ User cancelled session start');
-        //}
+        } catch (error) {
+            console.error('❌ Error calling AndroidAccess:', error);
+            alert('❌ Error: Failed to start session. Please try again.');
+        }
     }
 
-
-    // ✅ Go Home function
+    // Go Home function
     function goHome() {
         console.log('🏠 Go Home clicked');
 
@@ -930,20 +1114,6 @@
         } else {
             // Fallback
             alert('Going to home screen... 🏠');
-        }
-    }
-
-    // ✅ Handle Cancel function
-    function handleCancel() {
-        console.log('❌ Cancel clicked');
-
-        if (confirm('Are you sure you want to cancel the setup?')) {
-            if (typeof AndroidAccess !== 'undefined') {
-                AndroidAccess.onCancel();
-            } else {
-                // Fallback
-                goHome();
-            }
         }
     }
 
@@ -962,19 +1132,24 @@
         createParticles();
         initSeekBars();
         initQuickSelect();
+        initBlockReelsToggle(); // Initialize Block Reels Toggle
+
+        // Start Bubble Timer (30 sec countdown, loops)
+        bubbleTimerInterval = setInterval(updateBubbleTimer, 1000);
 
         console.log('✅ Access Screen initialized successfully');
     });
 
-    // Add some interactive effects
-    document.addEventListener('click', (e) => {
-        // Create ripple effect on clicks
+    // Add interactive effects with ripple
+    document.addEventListener('touchstart', (e) => {
+        // Create ripple effect on touches
+        const touch = e.touches[0];
         const ripple = document.createElement('div');
         ripple.style.position = 'fixed';
-        ripple.style.left = e.clientX + 'px';
-        ripple.style.top = e.clientY + 'px';
-        ripple.style.width = '20px';
-        ripple.style.height = '20px';
+        ripple.style.left = touch.clientX + 'px';
+        ripple.style.top = touch.clientY + 'px';
+        ripple.style.width = '15px';
+        ripple.style.height = '15px';
         ripple.style.background = 'rgba(74, 222, 128, 0.6)';
         ripple.style.borderRadius = '50%';
         ripple.style.transform = 'translate(-50%, -50%)';
@@ -985,63 +1160,21 @@
         document.body.appendChild(ripple);
 
         setTimeout(() => {
-            document.body.removeChild(ripple);
+            if (document.body.contains(ripple)) {
+                document.body.removeChild(ripple);
+            }
         }, 600);
-    });
+    }, { passive: true });
 
-    // Add ripple animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes rippleEffect {
-            0% {
-                transform: translate(-50%, -50%) scale(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(4);
-                opacity: 0;
-            }
+    // Prevent zoom on double tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
         }
-    `;
-    document.head.appendChild(style);
-
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        switch(e.key) {
-            case 'Enter':
-            case ' ':
-                e.preventDefault();
-                handleStartSession();
-                break;
-            case 'Escape':
-                handleCancel();
-                break;
-            case 'ArrowLeft':
-                // Decrease access time
-                selectedAccessTime = Math.max(5, selectedAccessTime - 5);
-                initSeekBars();
-                updateQuickSelectActive('access', selectedAccessTime);
-                break;
-            case 'ArrowRight':
-                // Increase access time
-                selectedAccessTime = Math.min(60, selectedAccessTime + 5);
-                initSeekBars();
-                updateQuickSelectActive('access', selectedAccessTime);
-                break;
-            case 'ArrowUp':
-                // Increase lock time
-                selectedLockTime = Math.min(120, selectedLockTime + 15);
-                initSeekBars();
-                updateQuickSelectActive('lock', selectedLockTime);
-                break;
-            case 'ArrowDown':
-                // Decrease lock time
-                selectedLockTime = Math.max(15, selectedLockTime - 15);
-                initSeekBars();
-                updateQuickSelectActive('lock', selectedLockTime);
-                break;
-        }
-    });
+        lastTouchEnd = now;
+    }, false);
 
     // Make functions globally available
     window.initializeWithSingleApp = initializeWithSingleApp;

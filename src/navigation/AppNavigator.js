@@ -7,6 +7,7 @@ import TimePickerScreen from '../screens/TimePickerScreen';
 import ActiveSessionScreen from '../screens/ActiveSessionScreen';
 import LockScreen from '../screens/LockScreen';
 import PermissionSetupScreen from '../screens/PermissionSetupScreen';
+import AppSettingsScreen from '../screens/AppSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -64,6 +65,17 @@ const AppNavigator = () => {
         //   animation: 'slide_from_bottom',
         // }}
       />
+
+      <Stack.Screen
+        name="AppSettingsScreen"
+        component={AppSettingsScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: false, // Disable swipe back
+          animation: 'slide_from_bottom',
+        }}
+      />
+
     </Stack.Navigator>
   );
 };

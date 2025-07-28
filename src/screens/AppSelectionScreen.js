@@ -1,5 +1,5 @@
 // src/screens/AppSelectionScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,35 +10,111 @@ import {
   StatusBar,
   ActivityIndicator,
   Modal,
+  TextInput,
+  Animated,
+  Dimensions,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { AppCard } from '../components';
 import { COLORS } from '../utils/constants';
 import StorageService from '../services/StorageService';
 import AppMonitorService from '../services/AppMonitorService';
 
+const { width } = Dimensions.get('window');
+
 const AppSelectionScreen = ({ navigation }) => {
   const [installedApps, setInstalledApps] = useState([]);
+  const [filteredApps, setFilteredApps] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [permissions, setPermissions] = useState({
     accessibility: false,
     overlay: false,
   });
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
+  // Animation values
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     initializeScreen();
+    startBubbleAnimation();
   }, []);
+
+  useEffect(() => {
+    filterAndSortApps();
+  }, [installedApps, selectedApps, searchQuery]);
+
+  const startBubbleAnimation = () => {
+    // Floating animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Breathing/Scaling animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Rotation animation
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 8000,
+        useNativeDriver: true,
+      })
+    ).start();
+  };
+
+  const filterAndSortApps = () => {
+    let filtered = installedApps.filter(app =>
+      app.appName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Sort: selected apps first, then alphabetically
+    filtered.sort((a, b) => {
+      const aSelected = selectedApps.includes(a.packageName);
+      const bSelected = selectedApps.includes(b.packageName);
+      
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      
+      return a.appName.localeCompare(b.appName);
+    });
+
+    setFilteredApps(filtered);
+  };
 
   const initializeScreen = async () => {
     try {
-      // Check permissions first
       await checkPermissions();
-
-      // Load previously selected apps
       await loadPreviouslySelectedApps();
-
-      // Get installed apps (fallback to mock if native fails)
       await loadInstalledApps();
     } catch (error) {
       console.error('Error initializing screen:', error);
@@ -52,7 +128,6 @@ const AppSelectionScreen = ({ navigation }) => {
       const perms = await AppMonitorService.checkPermissions();
       setPermissions(perms);
 
-      // Show permission modal if not granted
       if (!perms.accessibility || !perms.overlay) {
         setShowPermissionModal(true);
       }
@@ -68,43 +143,27 @@ const AppSelectionScreen = ({ navigation }) => {
       if (apps && apps.length > 0) {
         setInstalledApps(apps);
       } else {
-        // Fallback to mock data
         setInstalledApps(MOCK_APPS);
       }
     } catch (error) {
       console.error('Error loading installed apps:', error);
-      // Fallback to mock data
       setInstalledApps(MOCK_APPS);
     }
   };
 
-
   const loadPreviouslySelectedApps = async () => {
     try {
-      // Get active session from MMKV
       const activeSession = StorageService.getActiveSession();
-      console.log('✅ loadPreviouslySelectedApps', activeSession);
       AppMonitorService.updateActiveSession(
         JSON.stringify(StorageService.getActiveSession()),
       );
       if (activeSession && Object.keys(activeSession).length > 0) {
-        // Extract packageNames from activeSession keys
         const selectedPackageNames = Object.keys(activeSession);
         setSelectedApps(selectedPackageNames);
 
         console.log(
           '✅ Loaded previously selected apps from activeSession:',
           selectedPackageNames,
-        );
-      } else {
-        // Fallback to old method if activeSession is empty
-        const savedApps = StorageService.getLockedApps();
-        if (savedApps.length > 0) {
-          setSelectedApps(savedApps.map(app => app.packageName));
-        }
-        console.log(
-          '✅ savedApps Else:',
-          savedApps,
         );
       }
     } catch (error) {
@@ -114,7 +173,6 @@ const AppSelectionScreen = ({ navigation }) => {
 
   const toggleAppSelection = async packageName => {
     try {
-      // Get current active session from MMKV
       let activeSession = {};
       try {
         const existingSession = StorageService.getActiveSession();
@@ -131,13 +189,8 @@ const AppSelectionScreen = ({ navigation }) => {
 
       setSelectedApps(prev => {
         if (prev.includes(packageName)) {
-          // App is being UNSELECTED - remove from activeSession
           console.log(`🗑️ Removing ${packageName} from active session`);
-
-          // Remove the packageName key from activeSession
           delete activeSession[packageName];
-
-          // Save updated activeSession to MMKV
           StorageService.setActiveSession(activeSession);
           AppMonitorService.updateActiveSession(
             JSON.stringify(StorageService.getActiveSession()),
@@ -150,9 +203,6 @@ const AppSelectionScreen = ({ navigation }) => {
 
           return prev.filter(name => name !== packageName);
         } else {
-          // App is being SELECTED - add to activeSession
-
-          // Limit to 5 apps for MVP
           if (prev.length >= 5) {
             Alert.alert(
               'Limit Reached',
@@ -164,20 +214,17 @@ const AppSelectionScreen = ({ navigation }) => {
 
           console.log(`➕ Adding ${packageName} to active session`);
 
-          // Find the app details from installedApps
           const selectedApp = installedApps.find(
             app => app.packageName === packageName,
           );
 
           if (selectedApp) {
-            // Create the session object for this app
             activeSession[packageName] = {
-              //icon: '',
               icon: selectedApp.icon || '',
               appName: selectedApp.appName || 'Unknown App',
               packageName: packageName,
-              accessTime: 0, // Default values - will be set in TimePicker
-              lockTime: 0, // Default values - will be set in TimePicker
+              accessTime: 0,
+              lockTime: 0,
               accessStartTime: '',
               accessEndTime: '',
               lockUpToTime: '',
@@ -186,7 +233,6 @@ const AppSelectionScreen = ({ navigation }) => {
               isActive: true,
             };
 
-            // Save updated activeSession to MMKV
             StorageService.setActiveSession(activeSession);
             AppMonitorService.updateActiveSession(
               JSON.stringify(StorageService.getActiveSession()),
@@ -216,9 +262,7 @@ const AppSelectionScreen = ({ navigation }) => {
       return;
     }
 
-    // Check permissions again before continuing
     const currentPerms = await AppMonitorService.checkPermissions();
-
     if (!currentPerms.accessibility || !currentPerms.overlay) {
       Alert.alert(
         'Permissions Required',
@@ -234,7 +278,6 @@ const AppSelectionScreen = ({ navigation }) => {
       return;
     }
 
-    // Save selected apps to storage
     const appsToSave = installedApps
       .filter(app => selectedApps.includes(app.packageName))
       .map(app => ({
@@ -242,18 +285,40 @@ const AppSelectionScreen = ({ navigation }) => {
         isActive: true,
       }));
 
-    StorageService.setLockedApps(appsToSave);
-
-    // Start app monitoring service
     AppMonitorService.startMonitoring();
-
-    // Navigate to time picker
     navigation.navigate('TimePicker', { selectedApps: appsToSave });
   };
 
   const handlePermissionSetup = () => {
     setShowPermissionModal(false);
     navigation.navigate('PermissionSetup');
+  };
+
+  const handleBubblePress = () => {
+    // Add ripple effect
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setShowSearchModal(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const closeSearchModal = () => {
+    setShowSearchModal(false);
+    setSearchQuery('');
   };
 
   const renderAppItem = ({ item }) => (
@@ -263,35 +328,89 @@ const AppSelectionScreen = ({ navigation }) => {
       icon={item.icon}
       isSelected={selectedApps.includes(item.packageName)}
       onPress={() => toggleAppSelection(item.packageName)}
+      navigation={navigation}
+      onSettingsPress={({ appName, packageName, icon }) => {
+        console.log(`Settings pressed for ${appName}`);
+      }}
     />
   );
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        style={[styles.container, styles.centered]}
+      >
+        <ActivityIndicator size="large" color="#ffffff" />
         <Text style={styles.loadingText}>Loading installed apps...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.BACKGROUND} />
+  const floatInterpolate = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
 
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#667eea" />
+
+      {/* Header with Bubble */}
       <View style={styles.header}>
-        <Text style={styles.title}>Choose Apps to Control</Text>
+        <View style={styles.titleContainer}>
+          {/* Animated Water Bubble */}
+          <TouchableOpacity
+            onPress={handleBubblePress}
+            style={styles.bubbleContainer}
+            activeOpacity={0.8}
+          >
+            <Animated.View
+              style={[
+                styles.waterBubble,
+                {
+                  transform: [
+                    { translateY: floatInterpolate },
+                    { scale: scaleAnim },
+                    { rotate: rotateInterpolate },
+                  ],
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.1)']}
+                style={styles.bubbleGradient}
+              >
+                <Text style={styles.bubbleIcon}>🔍</Text>
+                {/* Bubble shine effect */}
+                <View style={styles.bubbleShine} />
+              </LinearGradient>
+            </Animated.View>
+          </TouchableOpacity>
+
+          <Text style={styles.title}>Choose Apps to Control</Text>
+        </View>
+        
         <Text style={styles.subtitle}>
           Select apps that distract you the most
         </Text>
-        <Text style={styles.limit}>({selectedApps.length}/5 selected)</Text>
+        
+        <View style={styles.counterContainer}>
+          <Text style={styles.counterText}>
+            {selectedApps.length}/5 apps selected
+          </Text>
+        </View>
 
-        {/* Permission Status */}
+        {/* Permission Warning */}
         {(!permissions.accessibility || !permissions.overlay) && (
           <View style={styles.permissionWarning}>
             <Text style={styles.warningText}>
-              ⚠️ Some permissions are missing. App blocking may not work
-              properly.
+              ⚠️ Some permissions are missing. App blocking may not work properly.
             </Text>
             <TouchableOpacity
               style={styles.warningButton}
@@ -303,15 +422,19 @@ const AppSelectionScreen = ({ navigation }) => {
         )}
       </View>
 
-      <FlatList
-        data={installedApps}
-        renderItem={renderAppItem}
-        keyExtractor={item => item.packageName}
-        style={styles.list}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-      />
+      {/* Apps List */}
+      <View style={styles.listContainer}>
+        <FlatList
+          data={filteredApps}
+          renderItem={renderAppItem}
+          keyExtractor={item => item.packageName}
+          style={styles.list}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
 
+      {/* Continue Button */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
@@ -321,16 +444,80 @@ const AppSelectionScreen = ({ navigation }) => {
           onPress={handleContinue}
           disabled={selectedApps.length === 0}
         >
-          <Text
-            style={[
-              styles.continueButtonText,
-              selectedApps.length === 0 && styles.disabledButtonText,
-            ]}
+          <LinearGradient
+            colors={
+              selectedApps.length > 0
+                ? ['#FF6B6B', '#FF8E53']
+                : ['#CCC', '#AAA']
+            }
+            style={styles.buttonGradient}
           >
-            Continue ({selectedApps.length} apps)
-          </Text>
+            <Text
+              style={[
+                styles.continueButtonText,
+                selectedApps.length === 0 && styles.disabledButtonText,
+              ]}
+            >
+              Continue ({selectedApps.length} apps) →
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
+
+      {/* Search Modal */}
+      <Modal
+        visible={showSearchModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeSearchModal}
+      >
+        <View style={styles.searchModalOverlay}>
+          <View style={styles.searchModalContent}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.searchHeader}
+            >
+              <Text style={styles.searchTitle}>Search Apps</Text>
+              <TouchableOpacity
+                onPress={closeSearchModal}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <View style={styles.searchInputContainer}>
+              <View style={styles.searchBar}>
+                <Text style={styles.searchIcon}>🔍</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Type app name to search..."
+                  placeholderTextColor="#999"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoFocus={true}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                    <Text style={styles.clearText}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {/* Search Results */}
+            <View style={styles.searchResults}>
+              <FlatList
+                data={filteredApps}
+                renderItem={renderAppItem}
+                keyExtractor={item => item.packageName}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.searchListContent}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Permission Setup Modal */}
       <Modal
@@ -341,58 +528,68 @@ const AppSelectionScreen = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Permissions Required</Text>
-            <Text style={styles.modalText}>
-              To block other apps, we need special permissions:
-            </Text>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.modalHeader}
+            >
+              <Text style={styles.modalTitle}>Permissions Required</Text>
+            </LinearGradient>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.modalText}>
+                To block other apps, we need special permissions:
+              </Text>
 
-            <View style={styles.permissionList}>
-              <View style={styles.permissionItem}>
-                <Text style={styles.permissionName}>
-                  {permissions.accessibility ? '✅' : '❌'} Accessibility
-                  Service
-                </Text>
-                <Text style={styles.permissionDesc}>Monitor app launches</Text>
+              <View style={styles.permissionList}>
+                <View style={styles.permissionItem}>
+                  <Text style={styles.permissionName}>
+                    {permissions.accessibility ? '✅' : '❌'} Accessibility Service
+                  </Text>
+                  <Text style={styles.permissionDesc}>Monitor app launches</Text>
+                </View>
+
+                <View style={styles.permissionItem}>
+                  <Text style={styles.permissionName}>
+                    {permissions.overlay ? '✅' : '❌'} Display Over Apps
+                  </Text>
+                  <Text style={styles.permissionDesc}>Show lock screen overlay</Text>
+                </View>
               </View>
 
-              <View style={styles.permissionItem}>
-                <Text style={styles.permissionName}>
-                  {permissions.overlay ? '✅' : '❌'} Display Over Apps
-                </Text>
-                <Text style={styles.permissionDesc}>
-                  Show lock screen overlay
-                </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalSkipButton}
+                  onPress={() => setShowPermissionModal(false)}
+                >
+                  <Text style={styles.modalSkipText}>Skip for Now</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalSetupButton}
+                  onPress={handlePermissionSetup}
+                >
+                  <LinearGradient
+                    colors={['#FF6B6B', '#FF8E53']}
+                    style={styles.setupButtonGradient}
+                  >
+                    <Text style={styles.modalSetupText}>Setup Permissions</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalSkipButton}
-                onPress={() => setShowPermissionModal(false)}
-              >
-                <Text style={styles.modalSkipText}>Skip for Now</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalSetupButton}
-                onPress={handlePermissionSetup}
-              >
-                <Text style={styles.modalSetupText}>Setup Permissions</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 };
 
-// Update MOCK_APPS in AppSelectionScreen.js with better fallback
+// Mock Apps Data
 const MOCK_APPS = [
   {
     appName: 'Instagram',
     packageName: 'com.instagram.android',
-    icon: null, // Will show first letter fallback
+    icon: null,
   },
   {
     appName: 'YouTube',
@@ -434,7 +631,6 @@ const MOCK_APPS = [
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
   },
   centered: {
     justifyContent: 'center',
@@ -443,35 +639,96 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: COLORS.TEXT,
+    color: '#ffffff',
+    fontWeight: '500',
   },
   header: {
-    padding: 20,
+    paddingTop: 5,
+    paddingHorizontal: 20,
+    paddingBottom: 5,
+  },
+  titleContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  bubbleContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 10,
+    zIndex: 10,
+  },
+  waterBubble: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  bubbleGradient: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    overflow: 'hidden',
+  },
+  bubbleIcon: {
+    fontSize: 20,
+    color: '#667eea',
+    fontWeight: 'bold',
+  },
+  bubbleShine: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.TEXT,
-    marginBottom: 8,
+    color: '#ffffff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    //marginLeft: 0, // Space for bubble
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: 15,
   },
-  limit: {
+  counterContainer: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  counterText: {
+    color: '#ffffff',
     fontSize: 14,
-    color: COLORS.PRIMARY,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   permissionWarning: {
-    backgroundColor: '#FFF3CD',
+    backgroundColor: 'rgba(255,243,205,0.95)',
     padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-    width: '100%',
+    borderRadius: 10,
+    marginTop: 10,
     alignItems: 'center',
   },
   warningText: {
@@ -481,15 +738,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   warningButton: {
-    backgroundColor: COLORS.WARNING,
+    backgroundColor: '#FF6B6B',
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 15,
   },
   warningButtonText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    marginHorizontal: 10,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingTop: 10,
   },
   list: {
     flex: 1,
@@ -499,34 +764,117 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    marginHorizontal: 10,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
   },
   continueButton: {
-    backgroundColor: COLORS.PRIMARY,
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 2,
+    borderRadius: 25,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  buttonGradient: {
+    paddingVertical: 16,
+    borderRadius: 25,
+    alignItems: 'center',
   },
   disabledButton: {
-    backgroundColor: '#CCC',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   continueButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   disabledButtonText: {
     color: '#888',
   },
 
-  // Modal styles
+  // Search Modal Styles
+  searchModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: '95%',
+    maxHeight: '90%',
+    overflow: 'hidden',
+    elevation: 15,
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  searchTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  searchInputContainer: {
+    padding: 20,
+    paddingBottom: 10,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    elevation: 2,
+  },
+  searchIcon: {
+    fontSize: 18,
+    marginRight: 10,
+    color: '#666',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    padding: 0,
+  },
+  clearButton: {
+    padding: 5,
+  },
+  clearText: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: 'bold',
+  },
+  searchResults: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  searchListContent: {
+    paddingBottom: 20,
+  },
+
+  // Permission Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -535,21 +883,27 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: 24,
-    borderRadius: 16,
+    borderRadius: 20,
     width: '90%',
     maxWidth: 400,
+    overflow: 'hidden',
+    elevation: 10,
+  },
+  modalHeader: {
+    padding: 20,
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.TEXT,
-    marginBottom: 12,
-    textAlign: 'center',
+    color: '#ffffff',
+  },
+  modalBody: {
+    padding: 20,
   },
   modalText: {
     fontSize: 14,
-    color: COLORS.TEXT,
+    color: '#333',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -558,11 +912,14 @@ const styles = StyleSheet.create({
   },
   permissionItem: {
     marginBottom: 12,
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
   },
   permissionName: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.TEXT,
+    color: '#333',
     marginBottom: 4,
   },
   permissionDesc: {
@@ -578,21 +935,23 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     marginRight: 8,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#DDD',
   },
   modalSkipText: {
-    color: COLORS.TEXT,
+    color: '#333',
     fontWeight: 'bold',
   },
   modalSetupButton: {
     flex: 1,
+    marginLeft: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  setupButtonGradient: {
     padding: 12,
     alignItems: 'center',
-    marginLeft: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.PRIMARY,
   },
   modalSetupText: {
     color: 'white',
